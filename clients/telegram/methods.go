@@ -1,6 +1,8 @@
 package telegram
 
-const getUpdates = "getUpdates"
+const (
+	getUpdates = "getUpdates"
+)
 
 type receivedUpdates struct {
 	Ok      bool     `json:"ok"`
