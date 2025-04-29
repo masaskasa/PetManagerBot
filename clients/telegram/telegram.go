@@ -3,6 +3,7 @@ package telegram
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -32,6 +33,7 @@ func (client *Client) Updates(offset int, limit int) ([]update, error) {
 	query.Add("offset", strconv.Itoa(offset))
 	query.Add("limit", strconv.Itoa(limit))
 
+	log.Printf("getUpdates: init")
 	data, err := client.getRequest(getUpdates, query)
 	if err != nil {
 		return nil, err
@@ -40,6 +42,7 @@ func (client *Client) Updates(offset int, limit int) ([]update, error) {
 	var updates receivedUpdates
 
 	if err := json.Unmarshal(data, &updates); err != nil {
+		log.Printf("getRequest: error of parse responce data: %s", err.Error())
 		return nil, err
 	}
 
@@ -54,8 +57,11 @@ func (client *Client) getRequest(method string, query url.Values) ([]byte, error
 		Path:   path.Join(client.basePath, method),
 	}
 
+	log.Printf("getRequest: done url for GET request: %s", url.String())
+
 	request, err := http.NewRequest(http.MethodGet, url.String(), nil)
 	if err != nil {
+		log.Printf("getRequest: error of making GET request: %s", err.Error())
 		return nil, err
 	}
 
@@ -63,13 +69,16 @@ func (client *Client) getRequest(method string, query url.Values) ([]byte, error
 
 	response, err := client.client.Do(request)
 	if err != nil {
+		log.Printf("getRequest: error of send GET request: %s", err.Error())
 		return nil, err
 	}
 
-	defer func() { _ = response.Body.Close() }()
+	log.Printf("getRequest: GET request: %s", response.Status)
 
+	defer func() { _ = response.Body.Close() }()
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
+		log.Printf("getRequest: error of read responce body: %s", err.Error())
 		return nil, err
 	}
 
