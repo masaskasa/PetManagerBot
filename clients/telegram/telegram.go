@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -16,7 +17,7 @@ type Client struct {
 	client   http.Client
 }
 
-func New(host string, token string) *Client {
+func NewClient(host string, token string) *Client {
 	return &Client{
 		host:     host,
 		basePath: newBasePath(token),
@@ -82,6 +83,48 @@ func (client *Client) getRequest(method string, query url.Values) ([]byte, error
 	}
 
 	slog.Info("getRequest: response body:", body)
+
+	return body, err
+}
+
+func (client *Client) postRequest(method string, data []byte) ([]byte, error) {
+
+	slog.Info("postRequest: get body for request:", data)
+
+	url := url.URL{
+		Scheme: "https",
+		Host:   client.host,
+		Path:   path.Join(client.basePath, method),
+	}
+
+	slog.Info("postRequest: done url for POST request:", url.String())
+
+	requestBody := bytes.NewBuffer(data)
+
+	request, err := http.NewRequest(http.MethodPost, url.String(), requestBody)
+	if err != nil {
+		slog.Error("postRequest: error of making POST request:", err.Error())
+		return nil, err
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+
+	response, err := client.client.Do(request)
+	if err != nil {
+		slog.Error("postRequest: error of send POST request:", err.Error())
+		return nil, err
+	}
+
+	slog.Info("ostRequest: response status and header:", response.Status, response.Header)
+
+	defer func() { _ = response.Body.Close() }()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		slog.Error("postRequest: error of read response body: %s", err.Error())
+		return nil, err
+	}
+
+	slog.Info("postRequest: response body:", body)
 
 	return body, err
 }

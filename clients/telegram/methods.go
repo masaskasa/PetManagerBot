@@ -1,7 +1,8 @@
 package telegram
 
 const (
-	getUpdates = "getUpdates"
+	getUpdates  = "getUpdates"
+	sendMessage = "sendMessage"
 )
 
 type receivedUpdates struct {
@@ -28,4 +29,16 @@ type user struct {
 
 type chat struct {
 	ID int `json:"id"`
+}
+
+type textMessage struct {
+	ChatID int    `json:"chat_id"`
+	Text   string `json:"text"`
+}
+
+func NewTextMessage(chatID int, text string) *textMessage {
+	return &textMessage{
+		ChatID: chatID,
+		Text:   text,
+	}
 }
