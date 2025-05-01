@@ -14,30 +14,25 @@ func main() {
 	client := telegram.NewClient(tgHost, mustToken())
 
 	offset := 0
+	var chatID int
 	for {
-		updates, _ := client.Updates(offset, 100)
+		updates, _ := client.GetUpdates(offset, 100)
 		if len(updates) != 0 {
 			offset = updates[len(updates)-1].ID + 1
 			for _, upd := range updates {
 				slog.Debug(upd.Message.Text)
 			}
+			chatID = updates[0].Message.Chat.ID
 			time.Sleep(1 * time.Second)
 		} else {
 			continue
 		}
 
-		// test POST request
-		//data, err := json.Marshal(telegram.NewTextMessage(updates[0].Message.Chat.ID, "hello handsome"))
-		//if err != nil {
-		//	log.Fatal("error marshal text message")
-		//}
-		//
-		//body, err := client.PostRequest(telegram.SendMessage, data)
-		//if err != nil {
-		//	log.Fatal("error marshal text message")
-		//}
-		//
-		//slog.Info("response body:", body)
+		receivedMessage, err := client.SendMessage(chatID, "hello handsome")
+		if err != nil {
+			log.Fatal("error send message")
+		}
+		println(receivedMessage.Text)
 	}
 }
 

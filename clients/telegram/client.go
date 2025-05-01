@@ -2,13 +2,11 @@ package telegram
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"path"
-	"strconv"
 )
 
 type Client struct {
@@ -29,37 +27,17 @@ func newBasePath(token string) string {
 	return "bot" + token
 }
 
-func (client *Client) Updates(offset int, limit int) ([]update, error) {
-	query := url.Values{}
-	query.Add("offset", strconv.Itoa(offset))
-	query.Add("limit", strconv.Itoa(limit))
-
-	data, err := client.getRequest(getUpdates, query)
-	if err != nil {
-		return nil, err
-	}
-
-	var updates receivedUpdates
-
-	if err := json.Unmarshal(data, &updates); err != nil {
-		slog.Error("getRequest: error of parse response data:", err.Error())
-		return nil, err
-	}
-
-	return updates.Updates, nil
-}
-
 func (client *Client) getRequest(method string, query url.Values) ([]byte, error) {
 
-	url := url.URL{
+	URL := url.URL{
 		Scheme: "https",
 		Host:   client.host,
 		Path:   path.Join(client.basePath, method),
 	}
 
-	slog.Info("getRequest: done url for GET request with query parameters:", url.String(), query.Encode())
+	slog.Info("getRequest: done url for GET request with query parameters:", URL.String(), query.Encode())
 
-	request, err := http.NewRequest(http.MethodGet, url.String(), nil)
+	request, err := http.NewRequest(http.MethodGet, URL.String(), nil)
 	if err != nil {
 		slog.Error("getRequest: error of making GET request:", err.Error())
 		return nil, err
@@ -91,17 +69,17 @@ func (client *Client) postRequest(method string, data []byte) ([]byte, error) {
 
 	slog.Info("postRequest: get body for request:", data)
 
-	url := url.URL{
+	URL := url.URL{
 		Scheme: "https",
 		Host:   client.host,
 		Path:   path.Join(client.basePath, method),
 	}
 
-	slog.Info("postRequest: done url for POST request:", url.String())
+	slog.Info("postRequest: done url for POST request:", URL.String())
 
 	requestBody := bytes.NewBuffer(data)
 
-	request, err := http.NewRequest(http.MethodPost, url.String(), requestBody)
+	request, err := http.NewRequest(http.MethodPost, URL.String(), requestBody)
 	if err != nil {
 		slog.Error("postRequest: error of making POST request:", err.Error())
 		return nil, err
@@ -115,7 +93,7 @@ func (client *Client) postRequest(method string, data []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	slog.Info("ostRequest: response status and header:", response.Status, response.Header)
+	slog.Info("postRequest: response status and header:", response.Status, response.Header)
 
 	defer func() { _ = response.Body.Close() }()
 	body, err := io.ReadAll(response.Body)

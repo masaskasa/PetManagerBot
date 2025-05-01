@@ -1,44 +1,58 @@
 package telegram
 
+import (
+	"encoding/json"
+	"log/slog"
+	"net/url"
+	"strconv"
+)
+
 const (
 	getUpdates  = "getUpdates"
 	sendMessage = "sendMessage"
 )
 
-type receivedUpdates struct {
-	Ok      bool     `json:"ok"`
-	Updates []update `json:"result"`
-}
+func (client *Client) GetUpdates(offset int, limit int) ([]Update, error) {
+	query := url.Values{}
+	query.Add("offset", strconv.Itoa(offset))
+	query.Add("limit", strconv.Itoa(limit))
 
-type update struct {
-	ID      int      `json:"update_id"`
-	Message *message `json:"message"`
-}
-
-type message struct {
-	ID   int    `json:"message_id"`
-	From user   `json:"from"`
-	Chat chat   `json:"chat"`
-	Text string `json:"text"`
-}
-
-type user struct {
-	ID       int    `json:"id"`
-	UserName string `json:"username"`
-}
-
-type chat struct {
-	ID int `json:"id"`
-}
-
-type textMessage struct {
-	ChatID int    `json:"chat_id"`
-	Text   string `json:"text"`
-}
-
-func NewTextMessage(chatID int, text string) *textMessage {
-	return &textMessage{
-		ChatID: chatID,
-		Text:   text,
+	data, err := client.getRequest(getUpdates, query)
+	if err != nil {
+		return nil, err
 	}
+
+	var updates receivedUpdates
+
+	if err := json.Unmarshal(data, &updates); err != nil {
+		slog.Error("GetUpdates: error of parse response data:", err.Error())
+		return nil, err
+	}
+
+	return updates.Updates, nil
+}
+
+func (client *Client) SendMessage(chatID int, text string) (Message, error) {
+
+	textMessage := textMessage{ChatID: chatID, Text: text}
+
+	jsonMessage, err := json.Marshal(textMessage)
+	if err != nil {
+		slog.Error("SendMessage: error of serialize request Message to json:", err.Error())
+		return Message{}, err
+	}
+
+	data, err := client.postRequest(sendMessage, jsonMessage)
+	if err != nil {
+		return Message{}, err
+	}
+
+	var message Message
+
+	if err := json.Unmarshal(data, &message); err != nil {
+		slog.Error("SendMessage: error of parse response data:", err.Error())
+		return Message{}, err
+	}
+
+	return message, nil
 }
