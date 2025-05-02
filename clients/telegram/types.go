@@ -1,6 +1,6 @@
 package telegram
 
-type receivedUpdates struct {
+type ReceivedUpdates struct {
 	Ok      bool     `json:"ok"`
 	Updates []Update `json:"result"`
 }
@@ -12,27 +12,27 @@ type Update struct {
 
 type Message struct {
 	ID   int    `json:"message_id"`
-	From user   `json:"from"`
-	Chat chat   `json:"chat"`
+	From User   `json:"from"`
+	Chat Chat   `json:"chat"`
 	Text string `json:"text"`
 }
 
-type user struct {
+type User struct {
 	ID       int    `json:"id"`
 	UserName string `json:"username"`
 }
 
-type chat struct {
+type Chat struct {
 	ID int `json:"id"`
 }
 
-type textMessage struct {
+type TextMessage struct {
 	ChatID int    `json:"chat_id"`
 	Text   string `json:"text"`
 }
 
-func newTextMessage(chatID int, text string) *textMessage {
-	return &textMessage{
+func newTextMessage(chatID int, text string) *TextMessage {
+	return &TextMessage{
 		ChatID: chatID,
 		Text:   text,
 	}

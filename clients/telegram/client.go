@@ -35,7 +35,7 @@ func (client *Client) getRequest(method string, query url.Values) ([]byte, error
 		Path:   path.Join(client.basePath, method),
 	}
 
-	slog.Info("getRequest: done url for GET request with query parameters:", URL.String(), query.Encode())
+	slog.Info("getRequest: done url for GET request:", URL.String(), "with query parameters:", query.Encode())
 
 	request, err := http.NewRequest(http.MethodGet, URL.String(), nil)
 	if err != nil {
@@ -51,7 +51,7 @@ func (client *Client) getRequest(method string, query url.Values) ([]byte, error
 		return nil, err
 	}
 
-	slog.Info("getRequest: response status and header:", response.Status, response.Header)
+	slog.Info("getRequest: response status:", response.Status, "and header:", response.Header)
 
 	defer func() { _ = response.Body.Close() }()
 	body, err := io.ReadAll(response.Body)
@@ -93,7 +93,7 @@ func (client *Client) postRequest(method string, data []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	slog.Info("postRequest: response status and header:", response.Status, response.Header)
+	slog.Info("postRequest: response status:", response.Status, "and header", response.Header)
 
 	defer func() { _ = response.Body.Close() }()
 	body, err := io.ReadAll(response.Body)

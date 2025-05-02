@@ -22,7 +22,7 @@ func (client *Client) GetUpdates(offset int, limit int) ([]Update, error) {
 		return nil, err
 	}
 
-	var updates receivedUpdates
+	var updates ReceivedUpdates
 
 	if err := json.Unmarshal(data, &updates); err != nil {
 		slog.Error("GetUpdates: error of parse response data:", err.Error())
@@ -34,7 +34,7 @@ func (client *Client) GetUpdates(offset int, limit int) ([]Update, error) {
 
 func (client *Client) SendMessage(chatID int, text string) (Message, error) {
 
-	textMessage := textMessage{ChatID: chatID, Text: text}
+	textMessage := TextMessage{ChatID: chatID, Text: text}
 
 	jsonMessage, err := json.Marshal(textMessage)
 	if err != nil {

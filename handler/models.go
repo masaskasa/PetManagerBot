@@ -4,77 +4,77 @@ import (
 	"github.com/google/uuid"
 )
 
-type pet struct {
+type Pet struct {
 	id      uuid.UUID
 	owner   string
 	name    string
-	species *species
-	breed   *breed
-	sex     sex
+	species *Species
+	breed   *Breed
+	sex     Sex
 	// photo TODO
 	animalID     string
 	specialSigns string
 }
 
-func newPet(owner string) *pet {
-	return &pet{
+func newPet(owner string) *Pet {
+	return &Pet{
 		id:    uuid.New(),
 		owner: owner,
 	}
 }
 
-func (pet *pet) setName(name string) error {
+func (pet *Pet) setName(name string) error {
 	// validate TODO
 	pet.name = name
 	return nil
 }
 
-func (pet *pet) setSpecies(species *species) {
+func (pet *Pet) setSpecies(species *Species) {
 	pet.species = species
 }
 
-func (pet *pet) setBreed(breed *breed) {
+func (pet *Pet) setBreed(breed *Breed) {
 	pet.breed = breed
 }
 
-func (pet *pet) setSex(sex sex) {
+func (pet *Pet) setSex(sex Sex) {
 	pet.sex = sex
 }
 
-func (pet *pet) setAnimalID(animalID string) error {
+func (pet *Pet) setAnimalID(animalID string) error {
 	// validate TODO
 	pet.animalID = animalID
 	return nil
 }
 
-func (pet *pet) setSpecialSigns(specialSigns string) {
+func (pet *Pet) setSpecialSigns(specialSigns string) {
 	pet.specialSigns = specialSigns
 }
 
-type species struct {
+type Species struct {
 	id     uuid.UUID
 	name   string
-	breeds []breed
+	breeds []Breed
 }
 
-func showSpecies() []species {
+func showSpecies() []Species {
 	// create list of species TODO
-	return make([]species, 0)
+	return make([]Species, 0)
 }
 
-func (species *species) showBreeds() []breed {
+func (species *Species) showBreeds() []Breed {
 	// create list of breeds TODO
-	return make([]breed, 0)
+	return make([]Breed, 0)
 }
 
-type breed struct {
+type Breed struct {
 	id   uuid.UUID
 	name string
 }
 
-type sex uint
+type Sex uint
 
 const (
-	female sex = iota + 1
+	female Sex = iota + 1
 	male
 )
