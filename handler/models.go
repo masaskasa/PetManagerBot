@@ -5,56 +5,56 @@ import (
 )
 
 type Pet struct {
-	id      uuid.UUID
-	owner   string
-	name    string
-	species *Species
-	breed   *Breed
-	sex     Sex
-	// photo TODO
-	animalID     string
-	specialSigns string
+	ID      uuid.UUID
+	Owner   string
+	Name    string
+	Species *Species
+	Breed   *Breed
+	Sex     Sex
+	// Photo TODO
+	AnimalID     string
+	SpecialSigns string
 }
 
-func newPet(owner string) *Pet {
+func NewPet(owner string) *Pet {
 	return &Pet{
-		id:    uuid.New(),
-		owner: owner,
+		ID:    uuid.New(),
+		Owner: owner,
 	}
 }
 
-func (pet *Pet) setName(name string) error {
+func (pet *Pet) SetName(name string) error {
 	// validate TODO
-	pet.name = name
+	pet.Name = name
 	return nil
 }
 
-func (pet *Pet) setSpecies(species *Species) {
-	pet.species = species
+func (pet *Pet) SetSpecies(species *Species) {
+	pet.Species = species
 }
 
-func (pet *Pet) setBreed(breed *Breed) {
-	pet.breed = breed
+func (pet *Pet) SetBreed(breed *Breed) {
+	pet.Breed = breed
 }
 
-func (pet *Pet) setSex(sex Sex) {
-	pet.sex = sex
+func (pet *Pet) SetSex(sex Sex) {
+	pet.Sex = sex
 }
 
-func (pet *Pet) setAnimalID(animalID string) error {
+func (pet *Pet) SetAnimalID(animalID string) error {
 	// validate TODO
-	pet.animalID = animalID
+	pet.AnimalID = animalID
 	return nil
 }
 
-func (pet *Pet) setSpecialSigns(specialSigns string) {
-	pet.specialSigns = specialSigns
+func (pet *Pet) SetSpecialSigns(specialSigns string) {
+	pet.SpecialSigns = specialSigns
 }
 
 type Species struct {
-	id     uuid.UUID
-	name   string
-	breeds []Breed
+	ID     int
+	Name   string
+	Breeds []Breed
 }
 
 func showSpecies() []Species {
@@ -68,13 +68,13 @@ func (species *Species) showBreeds() []Breed {
 }
 
 type Breed struct {
-	id   uuid.UUID
-	name string
+	ID   int
+	Name string
 }
 
 type Sex uint
 
 const (
-	female Sex = iota + 1
-	male
+	Female Sex = iota + 1
+	Male
 )
