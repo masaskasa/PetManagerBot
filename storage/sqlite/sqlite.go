@@ -47,13 +47,33 @@ func (storage *Storage) Save(ctx context.Context, pet *handler.Pet) error {
 }
 
 func (storage *Storage) IsExists(ctx context.Context, petID uuid.UUID) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+
+	query := `select exists(select 1 from Pets where pet_id = ?) as is_exist`
+
+	var result int
+
+	err := storage.db.QueryRowContext(ctx, query, petID).Scan(&result)
+	if err != nil {
+		slog.Error("IsExists: can't check pet's existence:", err)
+		return false, err
+	}
+
+	return result == 1, nil
 }
 
 func (storage *Storage) Remove(ctx context.Context, petID uuid.UUID) error {
-	//TODO implement me
-	panic("implement me")
+
+	query := `delete from Pets where pet_id = ?`
+
+	result, err := storage.db.ExecContext(ctx, query, petID)
+	if err != nil {
+		slog.Error("Remove: can't remove pet:", err)
+		return err
+	}
+
+	slog.Info("Remove: result of sql request:", result)
+
+	return nil
 }
 
 func (storage *Storage) Get(ctx context.Context, petID uuid.UUID) (*handler.Pet, error) {

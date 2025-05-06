@@ -28,6 +28,7 @@ func main() {
 	offset := 0
 	var chatID int
 	var user string
+
 	for {
 		updates, _ := client.GetUpdates(offset, 100)
 		if len(updates) != 0 {
@@ -61,6 +62,25 @@ func main() {
 			slog.Debug("can't save pet:", err)
 		}
 	}
+
+	//petID, _ := uuid.Parse("77419089-b5c1-43a9-a293-87d7f5c9f894")
+	//
+	//result, err := storage.IsExists(context.TODO(), petID)
+	//if err != nil {
+	//	log.Fatalf("IsExists don't work: %s", err)
+	//}
+	//if result {
+	//	receivedMessage, _ := client.SendMessage(chatID, "Котя exists!")
+	//	println(receivedMessage.Text)
+	//}
+	//
+	//if err := storage.Remove(context.TODO(), petID); err != nil {
+	//	log.Fatalf("Remove don't work: %s", err)
+	//}
+	//if result {
+	//	receivedMessage, _ := client.SendMessage(chatID, "Котя удален")
+	//	println(receivedMessage.Text)
+	//}
 }
 
 /*
