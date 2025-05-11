@@ -2,11 +2,12 @@ package main
 
 import (
 	"PetManagerBot/clients/telegram"
+	"fmt"
+
 	//"PetManagerBot/handler"
 	"PetManagerBot/storage/sqlite"
 	"context"
 	"flag"
-	"github.com/google/uuid"
 	"log"
 	"log/slog"
 	"time"
@@ -44,11 +45,11 @@ func main() {
 			continue
 		}
 
-		receivedMessage, err := client.SendMessage(chatID, "hello handsome")
-		if err != nil {
-			log.Fatal("error send message")
-		}
-		println(receivedMessage.Text)
+		//receivedMessage, err := client.SendMessage(chatID, "hello handsome")
+		//if err != nil {
+		//	log.Fatal("error send message")
+		//}
+		//println(receivedMessage.Text)
 
 		//myPet := handler.NewPet(user)
 		//_ = myPet.SetName("Котя")
@@ -63,14 +64,24 @@ func main() {
 		//	slog.Debug("can't save pet:", err)
 		//}
 
-		petID, _ := uuid.Parse("88f8ee5e-255c-43f1-8ee0-4b05b8a6a80d")
-		pet, err := storage.Get(context.TODO(), petID)
+		//petID, _ := uuid.Parse("88f8ee5e-255c-43f1-8ee0-4b05b8a6a80d")
+		//pet, err := storage.Get(context.TODO(), petID)
 
-		receivedMessage, err = client.SendMessage(chatID, pet.String())
+		result, err := storage.GetPetsList(context.TODO(), "cinamorollya")
 		if err != nil {
-			log.Fatal("error send message")
+			log.Fatal("error get pets")
 		}
-		println(receivedMessage.Text)
+
+		fmt.Println(len(result))
+
+		for i := range result {
+
+			receivedMessage, err := client.SendMessage(chatID, result[i].String())
+			if err != nil {
+				log.Fatal("error send message")
+			}
+			println(receivedMessage.Text)
+		}
 	}
 
 	//result, err := storage.IsExists(context.TODO(), petID)

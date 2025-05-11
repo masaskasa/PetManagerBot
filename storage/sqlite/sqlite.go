@@ -133,9 +133,41 @@ func (storage *Storage) Update(ctx context.Context, pet *handler.Pet) error {
 	panic("implement me")
 }
 
-func (storage *Storage) GetPetsList(ctx context.Context, userName string) ([]handler.Pet, error) {
-	//TODO implement me
-	panic("implement me")
+func (storage *Storage) GetPetsList(ctx context.Context, owner string) ([]handler.Pet, error) {
+
+	pets := make([]handler.Pet, 0, 10)
+
+	query := `select pet_id, name from Pets where owner = ?`
+
+	rows, err := storage.db.Query(query, owner)
+	defer func() { _ = rows.Close() }()
+	if err != nil {
+		slog.Error("GetPetsList: can't get pets list:", err)
+		return nil, err
+	}
+
+	for rows.Next() {
+		var id string
+		var name string
+		var petID uuid.UUID
+
+		err = rows.Scan(&id, &name)
+		if err != nil {
+			slog.Error("GetPetsList: can't parse pet from row:", err)
+			return nil, err
+		}
+
+		petID, err = uuid.Parse(id)
+		if err != nil {
+			slog.Error("GetPetsList: can't parse pet's uuid:", err)
+			return nil, err
+		}
+
+		pets = append(pets, handler.Pet{ID: petID, Name: name})
+	}
+
+	slog.Info("GetPetsList: result:", pets)
+	return pets, nil
 }
 
 func (storage *Storage) GetSpeciesList(ctx context.Context) ([]handler.Species, error) {

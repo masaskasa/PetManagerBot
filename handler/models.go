@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/google/uuid"
+	"log/slog"
 )
 
 type Pet struct {
@@ -25,11 +26,21 @@ func NewPet(owner string) *Pet {
 
 func (pet *Pet) String() string {
 
+	var species string
+	if pet.Species != nil {
+		species = "\n" + pet.Species.Name
+	}
+
+	var breed string
+	if pet.Breed != nil {
+		breed = "\n" + pet.Breed.Name
+	}
+
 	var sex string
 	if pet.Sex == Female {
-		sex = "Девочка"
-	} else {
-		sex = "Мальчик"
+		sex = "\nДевочка"
+	} else if pet.Sex == Male {
+		sex = "\nМальчик"
 	}
 
 	var animalID string
@@ -42,7 +53,10 @@ func (pet *Pet) String() string {
 		specialSigns = "\n\n" + pet.SpecialSigns
 	}
 
-	return "Ваш питомец:\n\n" + pet.Name + "\n" + pet.Species.Name + "\n" + pet.Breed.Name + "\n" + sex + animalID + specialSigns
+	result := pet.Name + species + breed + sex + animalID + specialSigns
+
+	slog.Info("Pet: String() result:", result)
+	return result
 }
 
 func (pet *Pet) SetName(name string) error {
@@ -97,6 +111,7 @@ type Breed struct {
 type Sex uint
 
 const (
-	Female Sex = iota + 1
+	None Sex = iota + 1
+	Female
 	Male
 )

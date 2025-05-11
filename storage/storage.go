@@ -13,7 +13,7 @@ type Storage interface {
 	Remove(ctx context.Context, petID uuid.UUID) error
 	Get(ctx context.Context, petID uuid.UUID) (*handler.Pet, error)
 	Update(ctx context.Context, pet *handler.Pet) error
-	GetPetsList(ctx context.Context, userName string) ([]handler.Pet, error)
+	GetPetsList(ctx context.Context, owner string) ([]handler.Pet, error)
 	GetSpeciesList(ctx context.Context) ([]handler.Species, error)
 	GetBreedsList(ctx context.Context, speciesID int) ([]handler.Breed, error)
 }
