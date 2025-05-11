@@ -77,11 +77,63 @@ func (storage *Storage) Remove(ctx context.Context, petID uuid.UUID) error {
 }
 
 func (storage *Storage) Get(ctx context.Context, petID uuid.UUID) (*handler.Pet, error) {
+
+	query := `select P.owner,
+					 P.name,
+					 P.species_id,
+					 S.name,
+					 P.breed_id,
+					 B.name,
+					 P.sex,
+					 P.animal_id,
+					 P.special_signs
+			  from Pets as P
+			  join Species as S on P.species_id=S.species_id
+			  join Breeds as B on P.breed_id=B.breed_id
+			  where pet_id = ?`
+
+	var owner, name, speciesName, breedName string
+	var animalIDBytes, specialSignsBytes []byte
+	var speciesID, breedID, sex int
+
+	err := storage.db.QueryRowContext(ctx, query, petID).Scan(&owner, &name, &speciesID, &speciesName, &breedID, &breedName, &sex, &animalIDBytes, &specialSignsBytes)
+	if err != nil {
+		slog.Error("Get: can't get pet:", err)
+		return nil, err
+	}
+
+	var specialSigns string
+	if specialSignsBytes != nil {
+		specialSigns = string(specialSignsBytes)
+	}
+
+	var animalID string
+	if animalIDBytes != nil {
+		specialSigns = string(animalIDBytes)
+	}
+
+	return &handler.Pet{
+		ID:    petID,
+		Owner: owner,
+		Name:  name,
+		Species: &handler.Species{
+			ID:   speciesID,
+			Name: speciesName},
+		Breed: &handler.Breed{
+			ID:   breedID,
+			Name: breedName},
+		Sex:          handler.Sex(sex),
+		SpecialSigns: specialSigns,
+		AnimalID:     animalID,
+	}, nil
+}
+
+func (storage *Storage) Update(ctx context.Context, pet *handler.Pet) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (storage *Storage) Update(ctx context.Context, pet *handler.Pet) error {
+func (storage *Storage) GetPetsList(ctx context.Context, userName string) ([]handler.Pet, error) {
 	//TODO implement me
 	panic("implement me")
 }

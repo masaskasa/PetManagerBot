@@ -23,6 +23,28 @@ func NewPet(owner string) *Pet {
 	}
 }
 
+func (pet *Pet) String() string {
+
+	var sex string
+	if pet.Sex == Female {
+		sex = "Девочка"
+	} else {
+		sex = "Мальчик"
+	}
+
+	var animalID string
+	if pet.AnimalID != "" {
+		animalID = "\n" + pet.AnimalID
+	}
+
+	var specialSigns string
+	if pet.SpecialSigns != "" {
+		specialSigns = "\n\n" + pet.SpecialSigns
+	}
+
+	return "Ваш питомец:\n\n" + pet.Name + "\n" + pet.Species.Name + "\n" + pet.Breed.Name + "\n" + sex + animalID + specialSigns
+}
+
 func (pet *Pet) SetName(name string) error {
 	// validate TODO
 	pet.Name = name

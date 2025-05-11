@@ -2,10 +2,11 @@ package main
 
 import (
 	"PetManagerBot/clients/telegram"
-	"PetManagerBot/handler"
+	//"PetManagerBot/handler"
 	"PetManagerBot/storage/sqlite"
 	"context"
 	"flag"
+	"github.com/google/uuid"
 	"log"
 	"log/slog"
 	"time"
@@ -27,7 +28,7 @@ func main() {
 
 	offset := 0
 	var chatID int
-	var user string
+	//var user string
 
 	for {
 		updates, _ := client.GetUpdates(offset, 100)
@@ -37,7 +38,7 @@ func main() {
 				slog.Debug(upd.Message.Text)
 			}
 			chatID = updates[0].Message.Chat.ID
-			user = updates[0].Message.From.UserName
+			//user = updates[0].Message.From.UserName
 			time.Sleep(1 * time.Second)
 		} else {
 			continue
@@ -49,22 +50,29 @@ func main() {
 		}
 		println(receivedMessage.Text)
 
-		myPet := handler.NewPet(user)
-		_ = myPet.SetName("Котя")
-		myPet.SetSpecies(&handler.Species{ID: 2,
-			Name:   "Кошка",
-			Breeds: make([]handler.Breed, 0)})
-		myPet.SetBreed(&handler.Breed{ID: 11,
-			Name: "Метис"})
-		myPet.SetSex(handler.Female)
+		//myPet := handler.NewPet(user)
+		//_ = myPet.SetName("Котя")
+		//myPet.SetSpecies(&handler.Species{ID: 2,
+		//	Name:   "Кошка",
+		//	Breeds: make([]handler.Breed, 0)})
+		//myPet.SetBreed(&handler.Breed{ID: 11,
+		//	Name: "Метис"})
+		//myPet.SetSex(handler.Female)
+		//
+		//if err := storage.Save(context.TODO(), myPet); err != nil {
+		//	slog.Debug("can't save pet:", err)
+		//}
 
-		if err := storage.Save(context.TODO(), myPet); err != nil {
-			slog.Debug("can't save pet:", err)
+		petID, _ := uuid.Parse("88f8ee5e-255c-43f1-8ee0-4b05b8a6a80d")
+		pet, err := storage.Get(context.TODO(), petID)
+
+		receivedMessage, err = client.SendMessage(chatID, pet.String())
+		if err != nil {
+			log.Fatal("error send message")
 		}
+		println(receivedMessage.Text)
 	}
 
-	//petID, _ := uuid.Parse("77419089-b5c1-43a9-a293-87d7f5c9f894")
-	//
 	//result, err := storage.IsExists(context.TODO(), petID)
 	//if err != nil {
 	//	log.Fatalf("IsExists don't work: %s", err)
