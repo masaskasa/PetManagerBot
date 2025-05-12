@@ -171,13 +171,63 @@ func (storage *Storage) GetPetsList(ctx context.Context, owner string) ([]handle
 }
 
 func (storage *Storage) GetSpeciesList(ctx context.Context) ([]handler.Species, error) {
-	//TODO implement me
-	panic("implement me")
+
+	species := make([]handler.Species, 0, 15)
+
+	query := `select species_id, name from Species`
+
+	rows, err := storage.db.Query(query)
+	defer func() { _ = rows.Close() }()
+	if err != nil {
+		slog.Error("GetSpeciesList: can't get species list:", err)
+		return nil, err
+	}
+
+	for rows.Next() {
+		var id int
+		var name string
+
+		err = rows.Scan(&id, &name)
+		if err != nil {
+			slog.Error("GetSpeciesList: can't parse species from row:", err)
+			return nil, err
+		}
+
+		species = append(species, handler.Species{ID: id, Name: name})
+	}
+
+	slog.Info("GetSpeciesList: result:", species)
+	return species, nil
 }
 
 func (storage *Storage) GetBreedsList(ctx context.Context, speciesID int) ([]handler.Breed, error) {
-	//TODO implement me
-	panic("implement me")
+
+	breeds := make([]handler.Breed, 0, 25)
+
+	query := `select breed_id, name from Breeds where species_id = ?`
+
+	rows, err := storage.db.Query(query, speciesID)
+	defer func() { _ = rows.Close() }()
+	if err != nil {
+		slog.Error("GetBreedsList: can't get breeds list:", err)
+		return nil, err
+	}
+
+	for rows.Next() {
+		var id int
+		var name string
+
+		err = rows.Scan(&id, &name)
+		if err != nil {
+			slog.Error("GetBreedsList: can't parse breed from row:", err)
+			return nil, err
+		}
+
+		breeds = append(breeds, handler.Breed{ID: id, Name: name})
+	}
+
+	slog.Info("GetBreedsList: result:", breeds)
+	return breeds, nil
 }
 
 func (storage *Storage) Init(ctx context.Context) error {

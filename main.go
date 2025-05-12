@@ -2,14 +2,13 @@ package main
 
 import (
 	"PetManagerBot/clients/telegram"
-	"fmt"
-
-	//"PetManagerBot/handler"
+	"PetManagerBot/handler"
 	"PetManagerBot/storage/sqlite"
 	"context"
 	"flag"
 	"log"
 	"log/slog"
+	"strings"
 	"time"
 )
 
@@ -64,24 +63,57 @@ func main() {
 		//	slog.Debug("can't save pet:", err)
 		//}
 
-		//petID, _ := uuid.Parse("88f8ee5e-255c-43f1-8ee0-4b05b8a6a80d")
-		//pet, err := storage.Get(context.TODO(), petID)
-
-		result, err := storage.GetPetsList(context.TODO(), "cinamorollya")
+		result, err := storage.GetSpeciesList(context.TODO())
 		if err != nil {
 			log.Fatal("error get pets")
 		}
 
-		fmt.Println(len(result))
-
+		var builder strings.Builder
 		for i := range result {
-
-			receivedMessage, err := client.SendMessage(chatID, result[i].String())
-			if err != nil {
-				log.Fatal("error send message")
-			}
-			println(receivedMessage.Text)
+			builder.WriteString(result[i].String() + "\n")
 		}
+
+		receivedMessage, err := client.SendMessage(chatID, builder.String())
+		if err != nil {
+			log.Fatal("error send message")
+		}
+		println(receivedMessage.Text)
+
+		builder.Reset()
+
+		var resultBreeds []handler.Breed
+		resultBreeds, err = storage.GetBreedsList(context.TODO(), 2)
+		if err != nil {
+			log.Fatal("error get pets")
+		}
+
+		for i := range resultBreeds {
+			builder.WriteString(resultBreeds[i].String() + "\n")
+		}
+
+		receivedMessage, err = client.SendMessage(chatID, builder.String())
+		if err != nil {
+			log.Fatal("error send message")
+		}
+		println(receivedMessage.Text)
+
+		builder.Reset()
+
+		var resultPets []handler.Pet
+		resultPets, err = storage.GetPetsList(context.TODO(), "cinamorollya")
+		if err != nil {
+			log.Fatal("error get pets")
+		}
+
+		for i := range resultPets {
+			builder.WriteString(resultPets[i].Name + " /" + resultPets[i].ID.String() + "\n")
+		}
+
+		receivedMessage, err = client.SendMessage(chatID, builder.String())
+		if err != nil {
+			log.Fatal("error send message")
+		}
+		println(receivedMessage.Text)
 	}
 
 	//result, err := storage.IsExists(context.TODO(), petID)

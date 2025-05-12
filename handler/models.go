@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/google/uuid"
 	"log/slog"
+	"strconv"
 )
 
 type Pet struct {
@@ -36,13 +37,6 @@ func (pet *Pet) String() string {
 		breed = "\n" + pet.Breed.Name
 	}
 
-	var sex string
-	if pet.Sex == Female {
-		sex = "\nДевочка"
-	} else if pet.Sex == Male {
-		sex = "\nМальчик"
-	}
-
 	var animalID string
 	if pet.AnimalID != "" {
 		animalID = "\n" + pet.AnimalID
@@ -53,7 +47,7 @@ func (pet *Pet) String() string {
 		specialSigns = "\n\n" + pet.SpecialSigns
 	}
 
-	result := pet.Name + species + breed + sex + animalID + specialSigns
+	result := pet.Name + species + breed + pet.Sex.String() + animalID + specialSigns
 
 	slog.Info("Pet: String() result:", result)
 	return result
@@ -93,6 +87,10 @@ type Species struct {
 	Breeds []Breed
 }
 
+func (species *Species) String() string {
+	return species.Name + " /" + strconv.Itoa(species.ID)
+}
+
 func showSpecies() []Species {
 	// create list of species TODO
 	return make([]Species, 0)
@@ -108,7 +106,20 @@ type Breed struct {
 	Name string
 }
 
+func (breed *Breed) String() string {
+	return breed.Name + " /" + strconv.Itoa(breed.ID)
+}
+
 type Sex uint
+
+func (sex Sex) String() string {
+	if sex == Female {
+		return "\nДевочка"
+	} else if sex == Male {
+		return "\nМальчик"
+	}
+	return "\n-"
+}
 
 const (
 	None Sex = iota + 1
