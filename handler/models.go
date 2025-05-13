@@ -122,7 +122,6 @@ func (sex Sex) String() string {
 }
 
 const (
-	None Sex = iota + 1
-	Female
+	Female Sex = iota + 1
 	Male
 )

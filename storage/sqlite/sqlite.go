@@ -2,33 +2,17 @@ package sqlite
 
 import (
 	"PetManagerBot/handler"
+	storagePack "PetManagerBot/storage"
 	"context"
 	"database/sql"
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"log/slog"
+	"strings"
 )
 
 type Storage struct {
 	db *sql.DB
-}
-
-func NewSqliteDB(path string) (*Storage, error) {
-
-	slog.Info("NewSqliteDB: open sqlite driven in %s", path)
-
-	db, err := sql.Open("sqlite3", path)
-	if err != nil {
-		slog.Error("NewSqliteDB: can't open database:", err.Error())
-		return nil, err
-	}
-
-	if err := db.Ping(); err != nil {
-		slog.Error("NewSqliteDB: can't connect to database:", err.Error())
-		return nil, err
-	}
-
-	return &Storage{db: db}, nil
 }
 
 func (storage *Storage) Save(ctx context.Context, pet *handler.Pet) error {
@@ -129,8 +113,57 @@ func (storage *Storage) Get(ctx context.Context, petID uuid.UUID) (*handler.Pet,
 }
 
 func (storage *Storage) Update(ctx context.Context, pet *handler.Pet) error {
-	//TODO implement me
-	panic("implement me")
+
+	updateParameters := make(map[string]interface{})
+
+	if pet.Owner != "" {
+		updateParameters[`owner`] = pet.Owner
+	}
+
+	if pet.Name != "" {
+		updateParameters[`name`] = pet.Name
+	}
+
+	if pet.Species != nil {
+		updateParameters[`species_id`] = pet.Species.ID
+	}
+
+	if pet.Breed != nil {
+		updateParameters[`breed_id`] = pet.Breed.ID
+	}
+
+	if pet.Sex != 0 {
+		updateParameters[`sex`] = pet.Sex
+	}
+
+	if pet.AnimalID != "" {
+		updateParameters[`animal_id`] = pet.AnimalID
+	}
+
+	if pet.SpecialSigns != "" {
+		updateParameters[`special_signs`] = pet.SpecialSigns
+	}
+
+	names := make([]string, 0, 10)
+	args := make([]interface{}, 0, 10)
+	for key, val := range updateParameters {
+		names = append(names, key+` = ?`)
+		args = append(args, val)
+	}
+	args = append(args, pet.ID)
+
+	query := `update Pets set ` + strings.Join(names, `, `) + ` where pet_id = ?`
+	slog.Info("Update: generated query:", query)
+
+	result, err := storage.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		slog.Error("Update: can't update pet:", err)
+		return err
+	}
+
+	slog.Info("Update: result of sql request:", result)
+
+	return nil
 }
 
 func (storage *Storage) GetPetsList(ctx context.Context, owner string) ([]handler.Pet, error) {
@@ -164,6 +197,11 @@ func (storage *Storage) GetPetsList(ctx context.Context, owner string) ([]handle
 		}
 
 		pets = append(pets, handler.Pet{ID: petID, Name: name})
+	}
+
+	if len(pets) == 0 {
+		slog.Info("GetPetsList: can't get pets list:", storagePack.ErrNoSavedPets)
+		return nil, storagePack.ErrNoSavedPets
 	}
 
 	slog.Info("GetPetsList: result:", pets)
@@ -230,6 +268,24 @@ func (storage *Storage) GetBreedsList(ctx context.Context, speciesID int) ([]han
 	return breeds, nil
 }
 
+func NewSqliteDB(path string) (*Storage, error) {
+
+	slog.Info("NewSqliteDB: open sqlite driven in %s", path)
+
+	db, err := sql.Open("sqlite3", path)
+	if err != nil {
+		slog.Error("NewSqliteDB: can't open database:", err.Error())
+		return nil, err
+	}
+
+	if err := db.Ping(); err != nil {
+		slog.Error("NewSqliteDB: can't connect to database:", err.Error())
+		return nil, err
+	}
+
+	return &Storage{db: db}, nil
+}
+
 func (storage *Storage) Init(ctx context.Context) error {
 
 	query := `create table if not exists Pets (pet_id text unique not null, owner text not null, name text not null, species_id integer not null, breed_id integer not null, sex integer not null, animal_id text, special_signs text)`
@@ -241,6 +297,5 @@ func (storage *Storage) Init(ctx context.Context) error {
 	}
 
 	slog.Info("Init: result of sql request:", result)
-
 	return nil
 }
