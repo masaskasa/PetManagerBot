@@ -112,6 +112,11 @@ func (breed *Breed) String() string {
 
 type Sex uint
 
+const (
+	Female Sex = iota + 1
+	Male
+)
+
 func (sex Sex) String() string {
 	if sex == Female {
 		return "\nДевочка"
@@ -120,8 +125,3 @@ func (sex Sex) String() string {
 	}
 	return "\n-"
 }
-
-const (
-	Female Sex = iota + 1
-	Male
-)
