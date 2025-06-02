@@ -12,7 +12,7 @@ type Consumer struct {
 	batchSize int
 }
 
-func New(fetcher eventsPack.IFetcher, processor eventsPack.IProcessor, batchSize int) *Consumer {
+func NewConsumer(fetcher eventsPack.IFetcher, processor eventsPack.IProcessor, batchSize int) *Consumer {
 	return &Consumer{
 		fetcher:   fetcher,
 		processor: processor,
@@ -33,10 +33,7 @@ func (consumer *Consumer) Start() error {
 			continue
 		}
 
-		//if err := consumer.handleEvents(events); err != nil {
-		//	slog.Error("Start: handleEvents:", err)
-		//	continue
-		//}
+		consumer.handleEvents(events)
 	}
 }
 
