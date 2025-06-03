@@ -2,7 +2,10 @@ package telegram
 
 import (
 	"PetManagerBot/clients/telegram"
-	"PetManagerBot/events"
+	eventsPack "PetManagerBot/events"
+	"PetManagerBot/handler"
+	"errors"
+	"log/slog"
 )
 
 type Processor struct {
@@ -15,9 +18,26 @@ func NewProcessor(tgClient *telegram.Client) *Processor {
 	}
 }
 
-func (processor *Processor) Process(event events.Event) error {
+var (
+	ErrUnknownEvent = errors.New("can't process: unknown event type")
+)
+
+func (processor *Processor) Process(event eventsPack.Event) error {
+
 	switch event.Type {
-	// TODO
+	case eventsPack.Message:
+		return processor.processMessage(event)
+	default:
+		return ErrUnknownEvent
 	}
+}
+
+func (processor *Processor) processMessage(event eventsPack.Event) error {
+
+	if err := handler.HandleEvent(event); err != nil {
+		slog.Error("processMessage: can't handle message", err)
+		return err
+	}
+
 	return nil
 }
