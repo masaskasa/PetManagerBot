@@ -34,7 +34,7 @@ func (processor *Processor) Process(event eventsPack.Event) error {
 
 func (processor *Processor) processMessage(event eventsPack.Event) error {
 
-	if err := handler.HandleEvent(event); err != nil {
+	if err := handler.Handle(event); err != nil {
 		slog.Error("processMessage: can't handle message", err)
 		return err
 	}
