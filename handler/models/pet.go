@@ -1,9 +1,8 @@
-package handler
+package models
 
 import (
 	"github.com/google/uuid"
 	"log/slog"
-	"strconv"
 )
 
 type Pet struct {
@@ -79,49 +78,4 @@ func (pet *Pet) SetAnimalID(animalID string) error {
 
 func (pet *Pet) SetSpecialSigns(specialSigns string) {
 	pet.SpecialSigns = specialSigns
-}
-
-type Species struct {
-	ID     int
-	Name   string
-	Breeds []Breed
-}
-
-func (species *Species) String() string {
-	return species.Name + " /" + strconv.Itoa(species.ID)
-}
-
-func showSpecies() []Species {
-	// create list of species TODO
-	return make([]Species, 0)
-}
-
-func (species *Species) showBreeds() []Breed {
-	// create list of breeds TODO
-	return make([]Breed, 0)
-}
-
-type Breed struct {
-	ID   int
-	Name string
-}
-
-func (breed *Breed) String() string {
-	return breed.Name + " /" + strconv.Itoa(breed.ID)
-}
-
-type Sex uint
-
-const (
-	Female Sex = iota + 1
-	Male
-)
-
-func (sex Sex) String() string {
-	if sex == Female {
-		return "\nДевочка"
-	} else if sex == Male {
-		return "\nМальчик"
-	}
-	return "\n-"
 }

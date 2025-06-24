@@ -72,3 +72,12 @@ func (session *session) reset() {
 	session.setState(ready)
 	session.resetTempObjects()
 }
+
+func (session *session) isOldSession() bool {
+
+	if time.Since(session.lastActivity) > 24*time.Hour {
+		return true
+	}
+
+	return false
+}

@@ -1,10 +1,10 @@
 package events
 
-type IFetcher interface {
+type Fetcher interface {
 	Fetch(limit int) ([]Event, error)
 }
 
-type IProcessor interface {
+type Processor interface {
 	Process(event Event) error
 }
 

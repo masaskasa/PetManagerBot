@@ -1,7 +1,7 @@
 package sqlite
 
 import (
-	"PetManagerBot/handler"
+	"PetManagerBot/handler/models"
 	storagePack "PetManagerBot/storage"
 	"context"
 	"database/sql"
@@ -15,7 +15,7 @@ type Storage struct {
 	db *sql.DB
 }
 
-func (storage *Storage) Save(ctx context.Context, pet *handler.Pet) error {
+func (storage *Storage) Save(ctx context.Context, pet *models.Pet) error {
 
 	query := `insert into Pets (pet_id, owner, name, species_id, breed_id, sex) values (?,?,?,?,?,?)`
 
@@ -60,7 +60,7 @@ func (storage *Storage) Remove(ctx context.Context, petID uuid.UUID) error {
 	return nil
 }
 
-func (storage *Storage) Get(ctx context.Context, petID uuid.UUID) (*handler.Pet, error) {
+func (storage *Storage) Get(ctx context.Context, petID uuid.UUID) (*models.Pet, error) {
 
 	query := `select P.owner,
 					 P.name,
@@ -96,23 +96,23 @@ func (storage *Storage) Get(ctx context.Context, petID uuid.UUID) (*handler.Pet,
 		specialSigns = string(animalIDBytes)
 	}
 
-	return &handler.Pet{
+	return &models.Pet{
 		ID:    petID,
 		Owner: owner,
 		Name:  name,
-		Species: &handler.Species{
+		Species: &models.Species{
 			ID:   speciesID,
 			Name: speciesName},
-		Breed: &handler.Breed{
+		Breed: &models.Breed{
 			ID:   breedID,
 			Name: breedName},
-		Sex:          handler.Sex(sex),
+		Sex:          models.Sex(sex),
 		SpecialSigns: specialSigns,
 		AnimalID:     animalID,
 	}, nil
 }
 
-func (storage *Storage) Update(ctx context.Context, pet *handler.Pet) error {
+func (storage *Storage) Update(ctx context.Context, pet *models.Pet) error {
 
 	updateParameters := make(map[string]interface{})
 
@@ -166,9 +166,9 @@ func (storage *Storage) Update(ctx context.Context, pet *handler.Pet) error {
 	return nil
 }
 
-func (storage *Storage) GetPetsList(ctx context.Context, owner string) ([]handler.Pet, error) {
+func (storage *Storage) GetPetsList(ctx context.Context, owner string) ([]models.Pet, error) {
 
-	pets := make([]handler.Pet, 0, 10)
+	pets := make([]models.Pet, 0, 10)
 
 	query := `select pet_id, name from Pets where owner = ?`
 
@@ -196,7 +196,7 @@ func (storage *Storage) GetPetsList(ctx context.Context, owner string) ([]handle
 			return nil, err
 		}
 
-		pets = append(pets, handler.Pet{ID: petID, Name: name})
+		pets = append(pets, models.Pet{ID: petID, Name: name})
 	}
 
 	if len(pets) == 0 {
@@ -208,9 +208,9 @@ func (storage *Storage) GetPetsList(ctx context.Context, owner string) ([]handle
 	return pets, nil
 }
 
-func (storage *Storage) GetSpeciesList(ctx context.Context) ([]handler.Species, error) {
+func (storage *Storage) GetSpeciesList(ctx context.Context) ([]models.Species, error) {
 
-	species := make([]handler.Species, 0, 15)
+	species := make([]models.Species, 0, 15)
 
 	query := `select species_id, name from Species`
 
@@ -231,16 +231,16 @@ func (storage *Storage) GetSpeciesList(ctx context.Context) ([]handler.Species, 
 			return nil, err
 		}
 
-		species = append(species, handler.Species{ID: id, Name: name})
+		species = append(species, models.Species{ID: id, Name: name})
 	}
 
 	slog.Info("GetSpeciesList: result:", species)
 	return species, nil
 }
 
-func (storage *Storage) GetBreedsList(ctx context.Context, speciesID int) ([]handler.Breed, error) {
+func (storage *Storage) GetBreedsList(ctx context.Context, speciesID int) ([]models.Breed, error) {
 
-	breeds := make([]handler.Breed, 0, 25)
+	breeds := make([]models.Breed, 0, 25)
 
 	query := `select breed_id, name from Breeds where species_id = ?`
 
@@ -261,7 +261,7 @@ func (storage *Storage) GetBreedsList(ctx context.Context, speciesID int) ([]han
 			return nil, err
 		}
 
-		breeds = append(breeds, handler.Breed{ID: id, Name: name})
+		breeds = append(breeds, models.Breed{ID: id, Name: name})
 	}
 
 	slog.Info("GetBreedsList: result:", breeds)

@@ -6,18 +6,18 @@ import (
 	"log/slog"
 )
 
-type Fetcher struct {
+type FetcherImpl struct {
 	tgClient *telegram.Client
 	offset   int
 }
 
-func NewFetcher(tgClient *telegram.Client) *Fetcher {
-	return &Fetcher{
+func NewFetcher(tgClient *telegram.Client) *FetcherImpl {
+	return &FetcherImpl{
 		tgClient: tgClient,
 	}
 }
 
-func (fetcher *Fetcher) Fetch(limit int) ([]eventsPack.Event, error) {
+func (fetcher *FetcherImpl) Fetch(limit int) ([]eventsPack.Event, error) {
 
 	updates, err := fetcher.tgClient.GetUpdates(fetcher.offset, limit)
 	if err != nil {

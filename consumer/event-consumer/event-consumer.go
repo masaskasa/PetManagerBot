@@ -7,12 +7,12 @@ import (
 )
 
 type Consumer struct {
-	fetcher   eventsPack.IFetcher
-	processor eventsPack.IProcessor
+	fetcher   eventsPack.Fetcher
+	processor eventsPack.Processor
 	batchSize int
 }
 
-func NewConsumer(fetcher eventsPack.IFetcher, processor eventsPack.IProcessor, batchSize int) *Consumer {
+func NewConsumer(fetcher eventsPack.Fetcher, processor eventsPack.Processor, batchSize int) *Consumer {
 	return &Consumer{
 		fetcher:   fetcher,
 		processor: processor,
