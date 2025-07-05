@@ -5,7 +5,7 @@ type Fetcher interface {
 }
 
 type Processor interface {
-	Process(event Event) error
+	Process(event *Event) error
 }
 
 type Type int

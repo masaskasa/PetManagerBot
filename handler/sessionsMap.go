@@ -2,25 +2,24 @@ package handler
 
 import "time"
 
-type SessionsMap map[string]*session
+type SessionsMap map[string]*Session
 
 func NewSessionsMap() SessionsMap {
-	return make(map[string]*session)
+	return make(map[string]*Session)
 }
 
-func (sessions SessionsMap) getSession(userName string) *session {
+func (sessions SessionsMap) GetSession(userName string, chatID int) *Session {
 
 	session, exists := sessions[userName]
 	if exists {
 		return session
 	}
 
-	sessions[userName] = newSession(userName)
+	sessions[userName] = newSession()
 	return sessions[userName]
 }
 
-func (sessions SessionsMap) cleanOldSessions() {
-
+func (sessions SessionsMap) CleanOldSessions() {
 	for {
 		time.Sleep(1 * time.Hour)
 		for userName, session := range sessions {

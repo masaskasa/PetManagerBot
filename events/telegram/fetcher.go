@@ -26,7 +26,7 @@ func (fetcher *FetcherImpl) Fetch(limit int) ([]eventsPack.Event, error) {
 	}
 
 	if len(updates) == 0 {
-		return nil, nil
+		return []eventsPack.Event{}, nil
 	}
 
 	events := make([]eventsPack.Event, len(updates))
@@ -39,7 +39,7 @@ func (fetcher *FetcherImpl) Fetch(limit int) ([]eventsPack.Event, error) {
 
 	fetcher.offset = updates[len(updates)-1].ID + 1
 
-	return nil, nil
+	return events, nil
 }
 
 func makeEvent(update telegram.Update) eventsPack.Event {

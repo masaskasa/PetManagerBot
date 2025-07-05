@@ -20,7 +20,7 @@ func NewConsumer(fetcher eventsPack.Fetcher, processor eventsPack.Processor, bat
 	}
 }
 
-func (consumer *Consumer) Start() error {
+func (consumer *Consumer) Start() {
 	for {
 		events, err := consumer.fetcher.Fetch(consumer.batchSize)
 		if err != nil {
@@ -29,7 +29,7 @@ func (consumer *Consumer) Start() error {
 		}
 
 		if len(events) == 0 {
-			time.Sleep(1 * time.Second)
+			time.Sleep(3 * time.Second)
 			continue
 		}
 
@@ -38,10 +38,13 @@ func (consumer *Consumer) Start() error {
 }
 
 func (consumer *Consumer) handleEvents(events []eventsPack.Event) {
+
+	slog.Info("Start handle events")
+
 	for _, event := range events {
 		slog.Info("handleEvents: got event", event.Text)
 
-		if err := consumer.processor.Process(event); err != nil {
+		if err := consumer.processor.Process(&event); err != nil {
 			slog.Error("handleEvents: can't handle event:", err)
 			continue
 		}

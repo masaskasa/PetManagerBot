@@ -5,7 +5,9 @@ import (
 	"time"
 )
 
-type session struct {
+type Session struct {
+	userName     string
+	chatID       int
 	scenario     scenario
 	state        dialogState
 	tempObjects  map[string]interface{}
@@ -17,8 +19,8 @@ var (
 	ErrObjectNotExists     = errors.New("can't get object: it not exist")
 )
 
-func newSession(user string) *session {
-	return &session{
+func newSession() *Session {
+	return &Session{
 		scenario:     none,
 		state:        ready,
 		tempObjects:  make(map[string]interface{}),
@@ -26,20 +28,20 @@ func newSession(user string) *session {
 	}
 }
 
-func (session *session) setScenario(scenario scenario) {
+func (session *Session) setScenario(scenario scenario) {
 	session.scenario = scenario
 }
 
-func (session *session) setState(state dialogState) {
+func (session *Session) setState(state dialogState) {
 	session.state = state
 	session.updateLastActivity()
 }
 
-func (session *session) updateLastActivity() {
+func (session *Session) updateLastActivity() {
 	session.lastActivity = time.Now()
 }
 
-func (session *session) saveObject(key string, tempObject interface{}) error {
+func (session *Session) saveObject(key string, tempObject interface{}) error {
 	_, exists := session.tempObjects[key]
 	if exists {
 		return ErrObjectAlreadyExists
@@ -49,11 +51,11 @@ func (session *session) saveObject(key string, tempObject interface{}) error {
 	return nil
 }
 
-func (session *session) updateObject(key string, tempObject interface{}) {
+func (session *Session) UpdateObject(key string, tempObject interface{}) {
 	session.tempObjects[key] = tempObject
 }
 
-func (session *session) getObject(key string) (interface{}, error) {
+func (session *Session) GetObject(key string) (interface{}, error) {
 
 	tempObject, exists := session.tempObjects[key]
 	if !exists {
@@ -63,17 +65,17 @@ func (session *session) getObject(key string) (interface{}, error) {
 	return tempObject, nil
 }
 
-func (session *session) resetTempObjects() {
+func (session *Session) resetTempObjects() {
 	session.tempObjects = make(map[string]interface{})
 }
 
-func (session *session) reset() {
+func (session *Session) reset() {
 	session.setScenario(none)
 	session.setState(ready)
 	session.resetTempObjects()
 }
 
-func (session *session) isOldSession() bool {
+func (session *Session) isOldSession() bool {
 
 	if time.Since(session.lastActivity) > 24*time.Hour {
 		return true
