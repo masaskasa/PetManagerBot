@@ -2,19 +2,27 @@ package main
 
 import (
 	"PetManagerBot/clients/telegram"
+	eventConsumer "PetManagerBot/consumer/event-consumer"
+	events "PetManagerBot/events/telegram"
 	"PetManagerBot/storage/sqlite"
 	"context"
 	"flag"
 	"log"
 )
 
-const tgHost = "api.telegram.org"
+const (
+	storagePath = "/home/user/storage_pet_manager_bot/storage.db"
+	tgHost      = "api.telegram.org"
+	batchSize   = 100
+)
 
 func main() {
+
 	client := telegram.NewClient(tgHost, mustToken())
 
-	storage, err := sqlite.NewSqliteDB("/home/user/storage_pet_manager_bot/storage.db")
+	storage, err := sqlite.NewSqliteDB(storagePath)
 	if err != nil {
+
 		log.Fatalf("can't connect to storage: %s", err)
 	}
 
@@ -22,6 +30,11 @@ func main() {
 		log.Fatalf("can't init storage: %s", err)
 	}
 
+	fetcher := events.NewFetcher(client)
+	processor := events.NewProcessor(client)
+
+	consumer := eventConsumer.NewConsumer(fetcher, processor, batchSize)
+	consumer.Start()
 }
 
 /*
