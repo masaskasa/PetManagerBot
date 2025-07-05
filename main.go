@@ -31,9 +31,11 @@ func main() {
 	}
 
 	fetcher := events.NewFetcher(client)
-	processor := events.NewProcessor(client)
+	processor := events.NewProcessor(client, storage)
 
 	consumer := eventConsumer.NewConsumer(fetcher, processor, batchSize)
+
+	go processor.Sessions.CleanOldSessions()
 	consumer.Start()
 }
 

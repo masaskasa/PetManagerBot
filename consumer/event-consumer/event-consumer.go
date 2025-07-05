@@ -20,6 +20,8 @@ func NewConsumer(fetcher eventsPack.Fetcher, processor eventsPack.Processor, bat
 	}
 }
 
+const noEventsDelay = 1 * time.Second
+
 func (consumer *Consumer) Start() {
 	for {
 		events, err := consumer.fetcher.Fetch(consumer.batchSize)
@@ -28,8 +30,10 @@ func (consumer *Consumer) Start() {
 			continue
 		}
 
+		slog.Info("Fetch events:", events)
+
 		if len(events) == 0 {
-			time.Sleep(3 * time.Second)
+			time.Sleep(noEventsDelay)
 			continue
 		}
 

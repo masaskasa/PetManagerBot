@@ -4,6 +4,7 @@ import (
 	"PetManagerBot/clients/telegram"
 	eventsPack "PetManagerBot/events"
 	"PetManagerBot/handler"
+	"PetManagerBot/storage"
 	"errors"
 	"log/slog"
 )
@@ -11,12 +12,14 @@ import (
 type ProcessorImpl struct {
 	TgClient *telegram.Client
 	Sessions handler.SessionsMap
+	Storage  storage.Storage
 }
 
-func NewProcessor(tgClient *telegram.Client) *ProcessorImpl {
+func NewProcessor(tgClient *telegram.Client, storage storage.Storage) *ProcessorImpl {
 	return &ProcessorImpl{
 		TgClient: tgClient,
 		Sessions: handler.NewSessionsMap(),
+		Storage:  storage,
 	}
 }
 
@@ -55,7 +58,7 @@ func (processor *ProcessorImpl) processMessage(event *eventsPack.Event) error {
 		return err
 	}
 
-	if err := handler.Handle(session, sendMessage); err != nil {
+	if err := handler.Handle(session, sendMessage, processor.Storage); err != nil {
 		slog.Error("processMessage: can't handle message", err)
 		return err
 	}
