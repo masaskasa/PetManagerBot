@@ -11,15 +11,15 @@ import (
 	"strings"
 )
 
-type Storage struct {
+type StorageImpl struct {
 	db *sql.DB
 }
 
-func (storage *Storage) Save(ctx context.Context, pet *models.Pet) error {
+func (storage *StorageImpl) Save(ctx context.Context, pet *models.Pet) error {
 
-	query := `insert into Pets (pet_id, owner, name, species_id, breed_id, sex) values (?,?,?,?,?,?)`
+	query := `insert into Pets (pet_id, owner, name, species_id, breed_id, sex, animal_id, special_signs) values (?,?,?,?,?,?,?,?)`
 
-	result, err := storage.db.ExecContext(ctx, query, pet.ID, pet.Owner, pet.Name, pet.Species.ID, pet.Breed.ID, pet.Sex)
+	result, err := storage.db.ExecContext(ctx, query, pet.ID, pet.Owner, pet.Name, pet.Species.ID, pet.Breed.ID, pet.Sex, pet.AnimalID, pet.SpecialSigns)
 	if err != nil {
 		slog.Error("Save: can't save pet:", err)
 		return err
@@ -30,7 +30,7 @@ func (storage *Storage) Save(ctx context.Context, pet *models.Pet) error {
 	return nil
 }
 
-func (storage *Storage) IsExists(ctx context.Context, petID uuid.UUID) (bool, error) {
+func (storage *StorageImpl) IsExists(ctx context.Context, petID uuid.UUID) (bool, error) {
 
 	query := `select exists(select 1 from Pets where pet_id = ?) as is_exist`
 
@@ -45,7 +45,7 @@ func (storage *Storage) IsExists(ctx context.Context, petID uuid.UUID) (bool, er
 	return result == 1, nil
 }
 
-func (storage *Storage) Remove(ctx context.Context, petID uuid.UUID) error {
+func (storage *StorageImpl) Remove(ctx context.Context, petID uuid.UUID) error {
 
 	query := `delete from Pets where pet_id = ?`
 
@@ -60,7 +60,7 @@ func (storage *Storage) Remove(ctx context.Context, petID uuid.UUID) error {
 	return nil
 }
 
-func (storage *Storage) Get(ctx context.Context, petID uuid.UUID) (*models.Pet, error) {
+func (storage *StorageImpl) Get(ctx context.Context, petID uuid.UUID) (*models.Pet, error) {
 
 	query := `select P.owner,
 					 P.name,
@@ -112,7 +112,7 @@ func (storage *Storage) Get(ctx context.Context, petID uuid.UUID) (*models.Pet, 
 	}, nil
 }
 
-func (storage *Storage) Update(ctx context.Context, pet *models.Pet) error {
+func (storage *StorageImpl) Update(ctx context.Context, pet *models.Pet) error {
 
 	updateParameters := make(map[string]interface{})
 
@@ -166,7 +166,7 @@ func (storage *Storage) Update(ctx context.Context, pet *models.Pet) error {
 	return nil
 }
 
-func (storage *Storage) GetPetsList(ctx context.Context, owner string) ([]models.Pet, error) {
+func (storage *StorageImpl) GetPetsList(ctx context.Context, owner string) ([]models.Pet, error) {
 
 	pets := make([]models.Pet, 0, 10)
 
@@ -208,7 +208,7 @@ func (storage *Storage) GetPetsList(ctx context.Context, owner string) ([]models
 	return pets, nil
 }
 
-func (storage *Storage) GetSpeciesList(ctx context.Context) ([]models.Species, error) {
+func (storage *StorageImpl) GetSpeciesList(ctx context.Context) ([]models.Species, error) {
 
 	species := make([]models.Species, 0, 15)
 
@@ -238,7 +238,7 @@ func (storage *Storage) GetSpeciesList(ctx context.Context) ([]models.Species, e
 	return species, nil
 }
 
-func (storage *Storage) GetBreedsList(ctx context.Context, speciesID int) ([]models.Breed, error) {
+func (storage *StorageImpl) GetBreedsList(ctx context.Context, speciesID int) ([]models.Breed, error) {
 
 	breeds := make([]models.Breed, 0, 25)
 
@@ -268,7 +268,7 @@ func (storage *Storage) GetBreedsList(ctx context.Context, speciesID int) ([]mod
 	return breeds, nil
 }
 
-func NewSqliteDB(path string) (*Storage, error) {
+func NewSqliteDB(path string) (*StorageImpl, error) {
 
 	slog.Info("NewSqliteDB: open sqlite driven in %s", path)
 
@@ -283,10 +283,10 @@ func NewSqliteDB(path string) (*Storage, error) {
 		return nil, err
 	}
 
-	return &Storage{db: db}, nil
+	return &StorageImpl{db: db}, nil
 }
 
-func (storage *Storage) Init(ctx context.Context) error {
+func (storage *StorageImpl) Init(ctx context.Context) error {
 
 	query := `create table if not exists Pets (pet_id text unique not null, owner text not null, name text not null, species_id integer not null, breed_id integer not null, sex integer not null, animal_id text, special_signs text)`
 

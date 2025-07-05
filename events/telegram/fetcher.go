@@ -35,8 +35,6 @@ func (fetcher *FetcherImpl) Fetch(limit int) ([]eventsPack.Event, error) {
 		events = append(events, makeEvent(update))
 	}
 
-	slog.Info("Fetch events:", events)
-
 	fetcher.offset = updates[len(updates)-1].ID + 1
 
 	return events, nil

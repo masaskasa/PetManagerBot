@@ -2,26 +2,33 @@ package handler
 
 import (
 	"PetManagerBot/clients/telegram"
+	storagePack "PetManagerBot/storage"
 	"log/slog"
 	"strings"
 )
 
 const (
-	chatID      = "ChatID"
-	userName    = "UserName"
 	messageText = "MessageText"
+	userName    = "UserName"
+	pet         = "Pet"
+	species     = "Species"
+	breed       = "Breeds"
 )
 
-func Handle(session *Session, sendMessage func(string) (telegram.Message, error)) error {
+func Handle(session *Session, sendMessage func(string) (telegram.Message, error), storage storagePack.Storage) error {
 
-	if session.scenario == none {
+	switch session.scenario {
+
+	case none:
 		err := doCommand(session, sendMessage)
 		if err != nil {
 			slog.Error("Handle: can't do command", err)
 			return err
 		}
-	} else {
-		//TODO pass to command handler
+
+	case createPetCommand:
+		return createPet(session, sendMessage, storage)
+
 	}
 
 	return nil
@@ -39,6 +46,11 @@ func doCommand(session *Session, sendMessage func(string) (telegram.Message, err
 	switch command {
 	case startCommand:
 		return helloMsg(sendMessage)
+	case helpCommand:
+		return helpMsg(sendMessage)
+	case createPetCommand:
+		doCreatePetScenario(session)
+		return nameMsg(sendMessage)
 	default:
 		return unknownMsg(sendMessage)
 	}
@@ -46,6 +58,16 @@ func doCommand(session *Session, sendMessage func(string) (telegram.Message, err
 
 func helloMsg(sendMessage func(string) (telegram.Message, error)) error {
 	_, result := sendMessage(msgHello)
+	return result
+}
+
+func nameMsg(sendMessage func(string) (telegram.Message, error)) error {
+	_, result := sendMessage(msgAskName)
+	return result
+}
+
+func helpMsg(sendMessage func(string) (telegram.Message, error)) error {
+	_, result := sendMessage(msgHelp)
 	return result
 }
 

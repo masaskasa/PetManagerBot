@@ -6,8 +6,6 @@ import (
 )
 
 type Session struct {
-	userName     string
-	chatID       int
 	scenario     scenario
 	state        dialogState
 	tempObjects  map[string]interface{}
