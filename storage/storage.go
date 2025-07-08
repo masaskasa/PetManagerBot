@@ -14,8 +14,8 @@ type Storage interface {
 	Get(ctx context.Context, petID uuid.UUID) (*models.Pet, error)
 	Update(ctx context.Context, pet *models.Pet) error
 	GetPetsList(ctx context.Context, owner string) ([]models.Pet, error)
-	GetSpeciesList(ctx context.Context) ([]models.Species, error)
-	GetBreedsList(ctx context.Context, speciesID int) ([]models.Breed, error)
+	GetSpeciesList(ctx context.Context) (map[int]*models.Species, error)
+	GetBreedsList(ctx context.Context, speciesID int) (map[int]*models.Breed, error)
 }
 
 var ErrNoSavedPets = errors.New("no saved pets")
