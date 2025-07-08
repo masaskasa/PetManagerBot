@@ -208,9 +208,9 @@ func (storage *StorageImpl) GetPetsList(ctx context.Context, owner string) ([]mo
 	return pets, nil
 }
 
-func (storage *StorageImpl) GetSpeciesList(ctx context.Context) ([]models.Species, error) {
+func (storage *StorageImpl) GetSpeciesList(ctx context.Context) (map[int]*models.Species, error) {
 
-	species := make([]models.Species, 0, 15)
+	species := make(map[int]*models.Species)
 
 	query := `select species_id, name from Species`
 
@@ -231,18 +231,18 @@ func (storage *StorageImpl) GetSpeciesList(ctx context.Context) ([]models.Specie
 			return nil, err
 		}
 
-		species = append(species, models.Species{ID: id, Name: name})
+		species[id] = &models.Species{ID: id, Name: name}
 	}
 
 	slog.Info("GetSpeciesList: result:", species)
 	return species, nil
 }
 
-func (storage *StorageImpl) GetBreedsList(ctx context.Context, speciesID int) ([]models.Breed, error) {
+func (storage *StorageImpl) GetBreedsList(ctx context.Context, speciesID int) (map[int]*models.Breed, error) {
 
-	breeds := make([]models.Breed, 0, 25)
+	breeds := make(map[int]*models.Breed)
 
-	query := `select breed_id, name from Breeds where species_id = ?`
+	query := `select breed_id, name, species_id from Breeds where species_id = ?`
 
 	rows, err := storage.db.Query(query, speciesID)
 	defer func() { _ = rows.Close() }()
@@ -254,14 +254,15 @@ func (storage *StorageImpl) GetBreedsList(ctx context.Context, speciesID int) ([
 	for rows.Next() {
 		var id int
 		var name string
+		var speciesID int
 
-		err = rows.Scan(&id, &name)
+		err = rows.Scan(&id, &name, &speciesID)
 		if err != nil {
 			slog.Error("GetBreedsList: can't parse breed from row:", err)
 			return nil, err
 		}
 
-		breeds = append(breeds, models.Breed{ID: id, Name: name})
+		breeds[id] = &models.Breed{ID: id, Name: name, SpeciesID: speciesID}
 	}
 
 	slog.Info("GetBreedsList: result:", breeds)

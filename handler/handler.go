@@ -3,6 +3,7 @@ package handler
 import (
 	"PetManagerBot/clients/telegram"
 	storagePack "PetManagerBot/storage"
+	"fmt"
 	"log/slog"
 	"strings"
 )
@@ -17,6 +18,15 @@ const (
 
 func Handle(session *Session, sendMessage func(string) (telegram.Message, error), storage storagePack.Storage) error {
 
+	isBreak, err := breakScenario(session, sendMessage)
+	if err != nil {
+		return err
+	}
+
+	if isBreak {
+		return nil
+	}
+
 	switch session.scenario {
 
 	case none:
@@ -28,7 +38,6 @@ func Handle(session *Session, sendMessage func(string) (telegram.Message, error)
 
 	case createPetCommand:
 		return createPet(session, sendMessage, storage)
-
 	}
 
 	return nil
@@ -49,7 +58,7 @@ func doCommand(session *Session, sendMessage func(string) (telegram.Message, err
 	case helpCommand:
 		return helpMsg(sendMessage)
 	case createPetCommand:
-		doCreatePetScenario(session)
+		startCreatePetScenario(session)
 		return nameMsg(sendMessage)
 	default:
 		return unknownMsg(sendMessage)
@@ -67,11 +76,38 @@ func nameMsg(sendMessage func(string) (telegram.Message, error)) error {
 }
 
 func helpMsg(sendMessage func(string) (telegram.Message, error)) error {
-	_, result := sendMessage(msgHelp)
+	_, result := sendMessage(msgHowToBegin)
 	return result
 }
 
 func unknownMsg(sendMessage func(string) (telegram.Message, error)) error {
 	_, result := sendMessage(msgUnknownCommand)
+	return result
+}
+
+func breakScenario(session *Session, sendMessage func(string) (telegram.Message, error)) (bool, error) {
+
+	text, err := session.GetObject(messageText)
+	if err != nil {
+		return false, err
+	}
+
+	command := strings.TrimSpace(text.(string))
+
+	if command == breakCommand {
+		return true, breakMsg(session, sendMessage)
+	}
+
+	return false, nil
+}
+
+func breakMsg(session *Session, sendMessage func(string) (telegram.Message, error)) error {
+
+	breakScenario := session.scenario
+
+	session.setState(ready)
+	session.setScenario(none)
+
+	_, result := sendMessage(msgBreakCommand + fmt.Sprint(msgTryAgain, breakScenario))
 	return result
 }

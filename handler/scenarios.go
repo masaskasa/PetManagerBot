@@ -10,4 +10,5 @@ const (
 	editPetCommand   = "/edit_pet"
 	deletePetCommand = "/delete_pet"
 	helpCommand      = "/help"
+	breakCommand     = "/break"
 )
