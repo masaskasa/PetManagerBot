@@ -3,18 +3,18 @@ package handler
 import (
 	"PetManagerBot/clients/telegram"
 	"PetManagerBot/handler/models"
-	storagePack "PetManagerBot/storage"
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"sort"
 	"strconv"
 	"strings"
 )
 
-func startCreatePetScenario(session *Session) {
-	session.setScenario(createPetCommand)
-	session.setState(start)
+func (handler *Handler) startCreatePetScenario() {
+	handler.session.setScenario(createPetCommand)
+	handler.session.setState(start)
 }
 
 var (
@@ -23,36 +23,36 @@ var (
 	ErrUnknownSex     = errors.New("unknown sex")
 )
 
-func createPet(session *Session, sendMessage func(string) (telegram.Message, error), storage storagePack.Storage) error {
+func (handler *Handler) createPet() error {
 
-	switch session.state {
+	switch handler.session.state {
 	case start:
-		return setNameComplete(session, sendMessage, storage)
+		return handler.setNameComplete()
 	case nameComplete:
-		return setSpeciesComplete(session, sendMessage, storage)
+		return handler.setSpeciesComplete()
 	case speciesComplete:
-		return setBreedComplete(session, sendMessage, storage)
+		return handler.setBreedComplete()
 	case breedComplete:
-		return setSexComplete(session, sendMessage)
+		return handler.setSexComplete()
 	case sexComplete:
-		return setAnimalIDComplete(session, sendMessage)
+		return handler.setAnimalIDComplete()
 	case animalIDComplete:
-		return setSpecialSignsComplete(session, sendMessage)
+		return handler.setSpecialSignsComplete()
 	case specialSignsComplete:
-		return setReadyCreatePet(session, sendMessage, storage)
+		return handler.setReadyCreatePet()
 	default:
 		return nil
 	}
 }
 
-func setNameComplete(session *Session, sendMessage func(string) (telegram.Message, error), storage storagePack.Storage) error {
+func (handler *Handler) setNameComplete() error {
 
-	answer, err := session.GetObject(messageText)
+	answer, err := handler.session.GetObject(messageText)
 	if err != nil {
 		return err
 	}
 
-	owner, err := session.GetObject(userName)
+	owner, err := handler.session.GetObject(userName)
 	if err != nil {
 		return err
 	}
@@ -63,65 +63,71 @@ func setNameComplete(session *Session, sendMessage func(string) (telegram.Messag
 		return err
 	}
 
-	session.UpdateObject(pet, newPet)
-	session.setState(nameComplete)
+	handler.session.UpdateObject(pet, newPet)
+	handler.session.setState(nameComplete)
 
-	speciesList, err := speciesList(session, storage)
+	speciesButtons, err := handler.speciesButtons()
 	if err != nil {
 		return err
 	}
 
-	_, result := sendMessage(msgAskSpecies + speciesList)
+	_, result := handler.sendMessageKeyboard(msgAskSpecies, *speciesButtons)
 	return result
 }
 
-func setSpeciesComplete(session *Session, sendMessage func(string) (telegram.Message, error), storage storagePack.Storage) error {
+func (handler *Handler) setSpeciesComplete() error {
 
-	species, err := determineSpecies(session)
+	species, err := handler.determineSpecies()
 	if errors.Is(err, ErrUnknownSpecies) {
-		speciesList, err := speciesList(session, storage)
+		speciesButtons, err := handler.speciesButtons()
 		if err != nil {
 			return err
 		}
-		_, result := sendMessage(msgInvalidSpecies + speciesList)
+		_, result := handler.sendMessageKeyboard(msgInvalidSpecies, *speciesButtons)
 		return result
 	} else if err != nil {
 		return err
 	}
 
-	newPet, err := determinePet(session)
+	newPet, err := handler.determinePet()
 	if err != nil {
 		return err
 	}
 
 	newPet.SetSpecies(species)
 
-	session.UpdateObject(pet, newPet)
-	session.setState(speciesComplete)
+	if handler.answerCallbackQuery != nil {
+		if _, err := handler.answerCallbackQuery(ntfSetSpecies+species.Name, false); err != nil {
+			slog.Error("setSpeciesComplete: answerCallbackQuery:", err)
+		}
+	}
 
-	breedList, err := breedList(session, storage, species.ID)
+	handler.session.UpdateObject(pet, newPet)
+	handler.session.setState(speciesComplete)
+
+	breedList, err := handler.breedList(species.ID)
 	if err != nil {
 		return err
 	}
 
-	_, result := sendMessage(msgAskBreed + breedList)
+	_, result := handler.sendMessage(msgAskBreed + breedList)
 	return result
 }
 
-func setBreedComplete(session *Session, sendMessage func(string) (telegram.Message, error), storage storagePack.Storage) error {
+func (handler *Handler) setBreedComplete() error {
 
-	newPet, err := determinePet(session)
+	newPet, err := handler.determinePet()
 	if err != nil {
 		return err
 	}
 
-	breed, err := determineBreed(session)
+	breed, err := handler.determineBreed()
 	if errors.Is(err, ErrUnknownBreed) {
-		breedList, err := breedList(session, storage, newPet.Species.ID)
+		breedList, err := handler.breedList(newPet.Species.ID)
 		if err != nil {
 			return err
 		}
-		_, result := sendMessage(msgInvalidBreed + breedList)
+		_, result := handler.sendMessage(msgInvalidBreed + breedList)
 		return result
 	} else if err != nil {
 		return err
@@ -129,45 +135,45 @@ func setBreedComplete(session *Session, sendMessage func(string) (telegram.Messa
 
 	newPet.SetBreed(breed)
 
-	session.UpdateObject(pet, newPet)
-	session.setState(breedComplete)
+	handler.session.UpdateObject(pet, newPet)
+	handler.session.setState(breedComplete)
 
-	_, result := sendMessage(msgAskSex)
+	_, result := handler.sendMessage(msgAskSex)
 	return result
 }
 
-func setSexComplete(session *Session, sendMessage func(string) (telegram.Message, error)) error {
+func (handler *Handler) setSexComplete() error {
 
-	sex, err := determineSex(session)
+	sex, err := handler.determineSex()
 	if errors.Is(err, ErrUnknownSex) {
-		_, result := sendMessage(msgInvalidSex)
+		_, result := handler.sendMessage(msgInvalidSex)
 		return result
 	} else if err != nil {
 		return err
 	}
 
-	newPet, err := determinePet(session)
+	newPet, err := handler.determinePet()
 	if err != nil {
 		return err
 	}
 
 	newPet.SetSex(sex)
 
-	session.UpdateObject(pet, newPet)
-	session.setState(sexComplete)
+	handler.session.UpdateObject(pet, newPet)
+	handler.session.setState(sexComplete)
 
-	_, result := sendMessage(msgAskAnimalID)
+	_, result := handler.sendMessage(msgAskAnimalID)
 	return result
 }
 
-func setAnimalIDComplete(session *Session, sendMessage func(string) (telegram.Message, error)) error {
+func (handler *Handler) setAnimalIDComplete() error {
 
-	answer, err := session.GetObject(messageText)
+	answer, err := handler.session.GetObject(messageText)
 	if err != nil {
 		return err
 	}
 
-	newPet, err := determinePet(session)
+	newPet, err := handler.determinePet()
 	if err != nil {
 		return err
 	}
@@ -179,23 +185,23 @@ func setAnimalIDComplete(session *Session, sendMessage func(string) (telegram.Me
 		if err := newPet.SetAnimalID(answer.(string)); err != nil {
 			return err
 		}
-		session.UpdateObject(pet, newPet)
+		handler.session.UpdateObject(pet, newPet)
 	}
 
-	session.setState(animalIDComplete)
+	handler.session.setState(animalIDComplete)
 
-	_, result := sendMessage(msgAskSpecialSigns)
+	_, result := handler.sendMessage(msgAskSpecialSigns)
 	return result
 }
 
-func setSpecialSignsComplete(session *Session, sendMessage func(string) (telegram.Message, error)) error {
+func (handler *Handler) setSpecialSignsComplete() error {
 
-	answer, err := session.GetObject(messageText)
+	answer, err := handler.session.GetObject(messageText)
 	if err != nil {
 		return err
 	}
 
-	newPet, err := determinePet(session)
+	newPet, err := handler.determinePet()
 	if err != nil {
 		return err
 	}
@@ -205,23 +211,23 @@ func setSpecialSignsComplete(session *Session, sendMessage func(string) (telegra
 
 	if specialSigns != "skip" {
 		newPet.SetSpecialSigns(answer.(string))
-		session.UpdateObject(pet, newPet)
+		handler.session.UpdateObject(pet, newPet)
 	}
 
-	session.setState(specialSignsComplete)
+	handler.session.setState(specialSignsComplete)
 
-	_, result := sendMessage(msgConfirmCreatePet + newPet.String())
+	_, result := handler.sendMessage(msgConfirmCreatePet + newPet.String())
 	return result
 }
 
-func setReadyCreatePet(session *Session, sendMessage func(string) (telegram.Message, error), storage storagePack.Storage) error {
+func (handler *Handler) setReadyCreatePet() error {
 
-	answer, err := session.GetObject(messageText)
+	answer, err := handler.session.GetObject(messageText)
 	if err != nil {
 		return err
 	}
 
-	newPet, err := determinePet(session)
+	newPet, err := handler.determinePet()
 	if err != nil {
 		return err
 	}
@@ -233,26 +239,26 @@ func setReadyCreatePet(session *Session, sendMessage func(string) (telegram.Mess
 
 	switch confirmation {
 	case "confirm":
-		if err := storage.Save(context.Background(), newPet); err != nil {
+		if err := handler.storage.Save(context.Background(), newPet); err != nil {
 			return err
 		}
-		_, result = sendMessage(msgReadyCreatePet)
+		_, result = handler.sendMessage(msgReadyCreatePet)
 	case "do_not_confirm":
-		_, result = sendMessage(fmt.Sprint(msgTryAgain, session.scenario))
+		_, result = handler.sendMessage(fmt.Sprint(msgTryAgain, handler.session.scenario))
 	default:
-		_, result = sendMessage(msgConfirmCreatePet + newPet.String())
+		_, result = handler.sendMessage(msgConfirmCreatePet + newPet.String())
 		return result
 	}
 
-	session.setState(ready)
-	session.setScenario(none)
+	handler.session.setState(ready)
+	handler.session.setScenario(none)
 
 	return result
 }
 
-func determinePet(session *Session) (*models.Pet, error) {
+func (handler *Handler) determinePet() (*models.Pet, error) {
 
-	pet, err := session.GetObject(pet)
+	pet, err := handler.session.GetObject(pet)
 	if err != nil {
 		return nil, err
 	}
@@ -262,21 +268,26 @@ func determinePet(session *Session) (*models.Pet, error) {
 	return newPet, nil
 }
 
-func determineSpecies(session *Session) (*models.Species, error) {
+func (handler *Handler) determineSpecies() (*models.Species, error) {
 
-	answer, err := session.GetObject(messageText)
-	if err != nil {
-		return nil, err
+	var serializedID string
+
+	answer, err := handler.session.GetObject(messageText)
+	if err == nil {
+		serializedID = strings.Trim(answer.(string), "/")
 	}
 
-	serializedID := strings.Trim(answer.(string), "/")
+	answer, err = handler.session.GetObject(callbackQueryData)
+	if err == nil {
+		serializedID = answer.(string)
+	}
 
 	id, err := strconv.Atoi(serializedID)
 	if err != nil {
 		return nil, ErrUnknownSpecies
 	}
 
-	list, err := session.GetObject(species)
+	list, err := handler.session.GetObject(species)
 	if err != nil {
 		return nil, err
 	}
@@ -291,9 +302,9 @@ func determineSpecies(session *Session) (*models.Species, error) {
 	return species, nil
 }
 
-func determineBreed(session *Session) (*models.Breed, error) {
+func (handler *Handler) determineBreed() (*models.Breed, error) {
 
-	answer, err := session.GetObject(messageText)
+	answer, err := handler.session.GetObject(messageText)
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +316,7 @@ func determineBreed(session *Session) (*models.Breed, error) {
 		return nil, ErrUnknownBreed
 	}
 
-	list, err := session.GetObject(breed)
+	list, err := handler.session.GetObject(breed)
 	if err != nil {
 		return nil, err
 	}
@@ -320,9 +331,9 @@ func determineBreed(session *Session) (*models.Breed, error) {
 	return breed, nil
 }
 
-func determineSex(session *Session) (models.Sex, error) {
+func (handler *Handler) determineSex() (models.Sex, error) {
 
-	answer, err := session.GetObject(messageText)
+	answer, err := handler.session.GetObject(messageText)
 	if err != nil {
 		return 0, err
 	}
@@ -340,17 +351,17 @@ func determineSex(session *Session) (models.Sex, error) {
 	}
 }
 
-func speciesList(session *Session, storage storagePack.Storage) (string, error) {
+func (handler *Handler) speciesList() (string, error) {
 
 	speciesList := make(map[int]*models.Species)
 
-	list, err := session.GetObject(species)
+	list, err := handler.session.GetObject(species)
 	if err != nil {
-		speciesList, err = storage.GetSpeciesList(context.Background())
+		speciesList, err = handler.storage.GetSpeciesList(context.Background())
 		if err != nil {
 			return "", err
 		}
-		session.UpdateObject(species, speciesList)
+		handler.session.UpdateObject(species, speciesList)
 	} else {
 		speciesList = list.(map[int]*models.Species)
 	}
@@ -366,17 +377,17 @@ func speciesList(session *Session, storage storagePack.Storage) (string, error) 
 	return serializedList, nil
 }
 
-func breedList(session *Session, storage storagePack.Storage, speciesID int) (string, error) {
+func (handler *Handler) breedList(speciesID int) (string, error) {
 
 	breedList := make(map[int]*models.Breed)
 
-	list, err := session.GetObject(breed)
+	list, err := handler.session.GetObject(breed)
 	if err != nil {
-		breedList, err = storage.GetBreedsList(context.Background(), speciesID)
+		breedList, err = handler.storage.GetBreedsList(context.Background(), speciesID)
 		if err != nil {
 			return "", err
 		}
-		session.UpdateObject(breed, breedList)
+		handler.session.UpdateObject(breed, breedList)
 	} else {
 		breedList = list.(map[int]*models.Breed)
 	}
@@ -402,4 +413,36 @@ func concatBuilder(words []string) string {
 	}
 
 	return b.String()
+}
+
+func (handler *Handler) speciesButtons() (*telegram.InlineKeyboardMarkup, error) {
+
+	speciesList := make(map[int]*models.Species)
+
+	list, err := handler.session.GetObject(species)
+	if err != nil {
+		speciesList, err = handler.storage.GetSpeciesList(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		handler.session.UpdateObject(species, speciesList)
+	} else {
+		speciesList = list.(map[int]*models.Species)
+	}
+
+	sortSpeciesList := make([]*models.Species, 0, len(speciesList))
+	for _, species := range speciesList {
+		sortSpeciesList = append(sortSpeciesList, species)
+	}
+	sort.Slice(sortSpeciesList, func(i, j int) bool {
+		return sortSpeciesList[i].Name < sortSpeciesList[j].Name
+	})
+
+	buttons := telegram.NewInlineKeyboardMarkup()
+
+	for _, species := range sortSpeciesList {
+		buttons.AddButtonInlineKeyboardMarkup(&telegram.InlineKeyboardButton{Text: species.Name, CallbackData: strconv.Itoa(species.ID)})
+	}
+
+	return &buttons, nil
 }

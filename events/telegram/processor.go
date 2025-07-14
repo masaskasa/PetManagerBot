@@ -25,13 +25,15 @@ func NewProcessor(tgClient *telegram.Client, storage storage.Storage) *Processor
 
 var (
 	ErrUnknownEvent    = errors.New("can't process: unknown event type")
-	ErrUnknownMetaType = errors.New("can't process: unknown meta type")
+	ErrUnknownMetaType = errors.New("can't process: unknown metaMessage type")
 )
 
 const (
-	chatID      = "ChatID"
-	userName    = "UserName"
-	messageText = "MessageText"
+	chatID            = "ChatID"
+	userName          = "UserName"
+	messageText       = "MessageText"
+	callbackQueryID   = "CallbackQueryID"
+	callbackQueryData = "CallbackQueryData"
 )
 
 func (processor *ProcessorImpl) Process(event *eventsPack.Event) error {
@@ -39,6 +41,8 @@ func (processor *ProcessorImpl) Process(event *eventsPack.Event) error {
 	switch event.Type {
 	case eventsPack.Message:
 		return processor.processMessage(event)
+	case eventsPack.CallbackQuery:
+		return processor.processCallbackQuery(event)
 	default:
 		return ErrUnknownEvent
 	}
@@ -58,7 +62,47 @@ func (processor *ProcessorImpl) processMessage(event *eventsPack.Event) error {
 		return err
 	}
 
-	if err := handler.Handle(session, sendMessage, processor.Storage); err != nil {
+	sendMessageKeyboard, err := newMessageSenderKeyboard(session, processor.TgClient)
+	if err != nil {
+		slog.Error("processMessage: can't create message sender keyboard", err)
+		return err
+	}
+
+	if err := handler.NewHandler(session, processor.Storage, sendMessage, sendMessageKeyboard, nil).Handle(); err != nil {
+		slog.Error("processMessage: can't handle message", err)
+		return err
+	}
+
+	return nil
+}
+
+func (processor *ProcessorImpl) processCallbackQuery(event *eventsPack.Event) error {
+
+	session, err := processor.prepareSession(event)
+	if err != nil {
+		slog.Error("processMessage: can't prepare session", err)
+		return err
+	}
+
+	sendMessage, err := newMessageSender(session, processor.TgClient)
+	if err != nil {
+		slog.Error("processMessage: can't create message sender", err)
+		return err
+	}
+
+	sendMessageKeyboard, err := newMessageSenderKeyboard(session, processor.TgClient)
+	if err != nil {
+		slog.Error("processMessage: can't create message sender keyboard", err)
+		return err
+	}
+
+	answerCallBackQuery, err := newAnswererCallbackQuery(session, processor.TgClient)
+	if err != nil {
+		slog.Error("processMessage: can't create callback query answerer", err)
+		return err
+	}
+
+	if err := handler.NewHandler(session, processor.Storage, sendMessage, sendMessageKeyboard, answerCallBackQuery).Handle(); err != nil {
 		slog.Error("processMessage: can't handle message", err)
 		return err
 	}
@@ -68,17 +112,36 @@ func (processor *ProcessorImpl) processMessage(event *eventsPack.Event) error {
 
 func (processor *ProcessorImpl) prepareSession(event *eventsPack.Event) (*handler.Session, error) {
 
-	meta, err := getMeta(event)
-	if err != nil {
-		return nil, err
+	switch event.Type {
+
+	case eventsPack.Message:
+		meta, err := getMetaMessage(event)
+		if err != nil {
+			return nil, err
+		}
+
+		session := processor.Sessions.GetSession(meta.UserName)
+		session.UpdateObject(userName, meta.UserName)
+		session.UpdateObject(chatID, meta.ChatID)
+		session.UpdateObject(messageText, event.Text)
+
+		return session, nil
+
+	case eventsPack.CallbackQuery:
+		meta, err := getMetaCallbackQuery(event)
+		if err != nil {
+			return nil, err
+		}
+
+		session := processor.Sessions.GetSession(meta.UserName)
+		session.UpdateObject(callbackQueryID, meta.ID)
+		session.UpdateObject(callbackQueryData, meta.Data)
+
+		return session, nil
+	default:
 	}
 
-	session := processor.Sessions.GetSession(meta.UserName, meta.ChatID)
-	session.UpdateObject(userName, meta.UserName)
-	session.UpdateObject(chatID, meta.ChatID)
-	session.UpdateObject(messageText, event.Text)
-
-	return session, nil
+	return nil, nil
 }
 
 func newMessageSender(session *handler.Session, tgClient *telegram.Client) (func(string) (telegram.Message, error), error) {
@@ -91,16 +154,54 @@ func newMessageSender(session *handler.Session, tgClient *telegram.Client) (func
 	chatID := chat.(int)
 
 	return func(msg string) (telegram.Message, error) {
-		return tgClient.SendMessage(chatID, msg)
+		return tgClient.SendMessage(chatID, msg, telegram.InlineKeyboardMarkup{})
 	}, nil
 }
 
-func getMeta(event *eventsPack.Event) (Meta, error) {
+func newMessageSenderKeyboard(session *handler.Session, tgClient *telegram.Client) (func(string, telegram.InlineKeyboardMarkup) (telegram.Message, error), error) {
 
-	result, ok := event.Meta.(Meta)
+	chat, err := session.GetObject(chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	chatID := chat.(int)
+
+	return func(msg string, keyboard telegram.InlineKeyboardMarkup) (telegram.Message, error) {
+		return tgClient.SendMessage(chatID, msg, keyboard)
+	}, nil
+}
+
+func newAnswererCallbackQuery(session *handler.Session, tgClient *telegram.Client) (func(string, bool) (telegram.Message, error), error) {
+
+	id, err := session.GetObject(callbackQueryID)
+	if err != nil {
+		return nil, err
+	}
+
+	callbackQueryID := id.(string)
+
+	return func(text string, showAlert bool) (telegram.Message, error) {
+		return tgClient.AnswerCallbackQuery(callbackQueryID, text, showAlert)
+	}, nil
+}
+
+func getMetaMessage(event *eventsPack.Event) (metaMessage, error) {
+
+	result, ok := event.Meta.(metaMessage)
 	if ok {
 		return result, nil
-	} else {
-		return Meta{}, ErrUnknownMetaType
 	}
+
+	return metaMessage{}, ErrUnknownMetaType
+}
+
+func getMetaCallbackQuery(event *eventsPack.Event) (metaCallbackQuery, error) {
+
+	result, ok := event.Meta.(metaCallbackQuery)
+	if ok {
+		return result, nil
+	}
+
+	return metaCallbackQuery{}, ErrUnknownMetaType
 }

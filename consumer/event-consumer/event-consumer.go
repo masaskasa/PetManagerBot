@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-type Consumer struct {
+type ConsumerImpl struct {
 	fetcher   eventsPack.Fetcher
 	processor eventsPack.Processor
 	batchSize int
 }
 
-func NewConsumer(fetcher eventsPack.Fetcher, processor eventsPack.Processor, batchSize int) *Consumer {
-	return &Consumer{
+func NewConsumer(fetcher eventsPack.Fetcher, processor eventsPack.Processor, batchSize int) *ConsumerImpl {
+	return &ConsumerImpl{
 		fetcher:   fetcher,
 		processor: processor,
 		batchSize: batchSize,
@@ -22,7 +22,8 @@ func NewConsumer(fetcher eventsPack.Fetcher, processor eventsPack.Processor, bat
 
 const noEventsDelay = 1 * time.Second
 
-func (consumer *Consumer) Start() {
+func (consumer *ConsumerImpl) Start() {
+
 	for {
 		events, err := consumer.fetcher.Fetch(consumer.batchSize)
 		if err != nil {
@@ -41,7 +42,7 @@ func (consumer *Consumer) Start() {
 	}
 }
 
-func (consumer *Consumer) handleEvents(events []eventsPack.Event) {
+func (consumer *ConsumerImpl) handleEvents(events []eventsPack.Event) {
 
 	slog.Info("Start handle events")
 

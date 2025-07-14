@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	getUpdates  = "getUpdates"
-	sendMessage = "sendMessage"
+	getUpdates          = "getUpdates"
+	sendMessage         = "sendMessage"
+	answerCallbackQuery = "answerCallbackQuery"
 )
 
 func (client *Client) GetUpdates(offset int, limit int) ([]Update, error) {
@@ -32,9 +33,9 @@ func (client *Client) GetUpdates(offset int, limit int) ([]Update, error) {
 	return updates.Updates, nil
 }
 
-func (client *Client) SendMessage(chatID int, text string) (Message, error) {
+func (client *Client) SendMessage(chatID int, text string, replyMarkup InlineKeyboardMarkup) (Message, error) {
 
-	textMessage := TextMessage{ChatID: chatID, Text: text}
+	textMessage := createTextMessage(chatID, text, replyMarkup)
 
 	jsonMessage, err := json.Marshal(textMessage)
 	if err != nil {
@@ -51,6 +52,42 @@ func (client *Client) SendMessage(chatID int, text string) (Message, error) {
 
 	if err := json.Unmarshal(data, &message); err != nil {
 		slog.Error("SendMessage: error of parse response data:", err.Error())
+		return Message{}, err
+	}
+
+	return message, nil
+}
+
+func createTextMessage(chatID int, text string, replyMarkup InlineKeyboardMarkup) interface{} {
+
+	if replyMarkup.InlineKeyboard != nil {
+		return TextMessageReplyMarkup{ChatID: chatID, Text: text, ReplyMarkup: replyMarkup}
+	} else {
+		return TextMessage{ChatID: chatID, Text: text}
+	}
+}
+
+func (client *Client) AnswerCallbackQuery(callbackQueryID string, text string, showAlert bool) (Message, error) {
+
+	jsonMessage, err := json.Marshal(CallbackQueryForAnswer{
+		ID:        callbackQueryID,
+		Text:      text,
+		ShowAlert: showAlert,
+	})
+	if err != nil {
+		slog.Error("AnswerCallbackQuery: error of serialize request CallbackQueryForAnswer to json:", err.Error())
+		return Message{}, err
+	}
+
+	data, err := client.postRequest(answerCallbackQuery, jsonMessage)
+	if err != nil {
+		return Message{}, err
+	}
+
+	var message Message
+
+	if err := json.Unmarshal(data, &message); err != nil {
+		slog.Error("AnswerCallbackQuery: error of parse response data:", err.Error())
 		return Message{}, err
 	}
 

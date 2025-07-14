@@ -9,16 +9,35 @@ import (
 )
 
 const (
-	messageText = "MessageText"
-	userName    = "UserName"
-	pet         = "Pet"
-	species     = "Species"
-	breed       = "Breeds"
+	messageText       = "MessageText"
+	userName          = "UserName"
+	pet               = "Pet"
+	species           = "Species"
+	breed             = "Breeds"
+	callbackQueryData = "CallbackQueryData"
 )
 
-func Handle(session *Session, sendMessage func(string) (telegram.Message, error), storage storagePack.Storage) error {
+type Handler struct {
+	session             *Session
+	storage             storagePack.Storage
+	sendMessage         func(string) (telegram.Message, error)
+	sendMessageKeyboard func(string, telegram.InlineKeyboardMarkup) (telegram.Message, error)
+	answerCallbackQuery func(string, bool) (telegram.Message, error)
+}
 
-	isBreak, err := breakScenario(session, sendMessage)
+func NewHandler(session *Session, storage storagePack.Storage, sendMessage func(string) (telegram.Message, error), sendMessageKeyboard func(string, telegram.InlineKeyboardMarkup) (telegram.Message, error), answerCallbackQuery func(string, bool) (telegram.Message, error)) *Handler {
+	return &Handler{
+		session:             session,
+		storage:             storage,
+		sendMessage:         sendMessage,
+		sendMessageKeyboard: sendMessageKeyboard,
+		answerCallbackQuery: answerCallbackQuery,
+	}
+}
+
+func (handler *Handler) Handle() error {
+
+	isBreak, err := handler.breakScenario()
 	if err != nil {
 		return err
 	}
@@ -27,25 +46,25 @@ func Handle(session *Session, sendMessage func(string) (telegram.Message, error)
 		return nil
 	}
 
-	switch session.scenario {
+	switch handler.session.scenario {
 
 	case none:
-		err := doCommand(session, sendMessage)
+		err := handler.doCommand()
 		if err != nil {
 			slog.Error("Handle: can't do command", err)
 			return err
 		}
 
 	case createPetCommand:
-		return createPet(session, sendMessage, storage)
+		return handler.createPet()
 	}
 
 	return nil
 }
 
-func doCommand(session *Session, sendMessage func(string) (telegram.Message, error)) error {
+func (handler *Handler) doCommand() error {
 
-	text, err := session.GetObject(messageText)
+	text, err := handler.session.GetObject(messageText)
 	if err != nil {
 		return err
 	}
@@ -54,40 +73,40 @@ func doCommand(session *Session, sendMessage func(string) (telegram.Message, err
 
 	switch command {
 	case startCommand:
-		return helloMsg(sendMessage)
+		return handler.helloMsg()
 	case helpCommand:
-		return helpMsg(sendMessage)
+		return handler.helpMsg()
 	case createPetCommand:
-		startCreatePetScenario(session)
-		return nameMsg(sendMessage)
+		handler.startCreatePetScenario()
+		return handler.nameMsg()
 	default:
-		return unknownMsg(sendMessage)
+		return handler.unknownMsg()
 	}
 }
 
-func helloMsg(sendMessage func(string) (telegram.Message, error)) error {
-	_, result := sendMessage(msgHello)
+func (handler *Handler) helloMsg() error {
+	_, result := handler.sendMessage(msgHello)
 	return result
 }
 
-func nameMsg(sendMessage func(string) (telegram.Message, error)) error {
-	_, result := sendMessage(msgAskName)
+func (handler *Handler) nameMsg() error {
+	_, result := handler.sendMessage(msgAskName)
 	return result
 }
 
-func helpMsg(sendMessage func(string) (telegram.Message, error)) error {
-	_, result := sendMessage(msgHowToBegin)
+func (handler *Handler) helpMsg() error {
+	_, result := handler.sendMessage(msgHowToBegin)
 	return result
 }
 
-func unknownMsg(sendMessage func(string) (telegram.Message, error)) error {
-	_, result := sendMessage(msgUnknownCommand)
+func (handler *Handler) unknownMsg() error {
+	_, result := handler.sendMessage(msgUnknownCommand)
 	return result
 }
 
-func breakScenario(session *Session, sendMessage func(string) (telegram.Message, error)) (bool, error) {
+func (handler *Handler) breakScenario() (bool, error) {
 
-	text, err := session.GetObject(messageText)
+	text, err := handler.session.GetObject(messageText)
 	if err != nil {
 		return false, err
 	}
@@ -95,19 +114,24 @@ func breakScenario(session *Session, sendMessage func(string) (telegram.Message,
 	command := strings.TrimSpace(text.(string))
 
 	if command == breakCommand {
-		return true, breakMsg(session, sendMessage)
+		return true, handler.breakMsg()
 	}
 
 	return false, nil
 }
 
-func breakMsg(session *Session, sendMessage func(string) (telegram.Message, error)) error {
+func (handler *Handler) breakMsg() error {
 
-	breakScenario := session.scenario
+	breakScenario := handler.session.scenario
 
-	session.setState(ready)
-	session.setScenario(none)
+	if breakScenario == none {
+		_, result := handler.sendMessage(msgNeedlessBreakCommand)
+		return result
+	}
 
-	_, result := sendMessage(msgBreakCommand + fmt.Sprint(msgTryAgain, breakScenario))
+	handler.session.setState(ready)
+	handler.session.setScenario(none)
+
+	_, result := handler.sendMessage(msgBreakCommand + fmt.Sprint(msgTryAgain, breakScenario))
 	return result
 }
