@@ -27,6 +27,10 @@ func (fetcher *FetcherImpl) Fetch(limit int) ([]eventsPack.Event, error) {
 
 	if len(updates) == 0 {
 		return []eventsPack.Event{}, nil
+	} else {
+		for _, update := range updates {
+			slog.Info("Fetch: GetUpdates: CallbackQuery:", update.CallbackQuery, "Message:", update.Message)
+		}
 	}
 
 	events := make([]eventsPack.Event, len(updates))
@@ -47,28 +51,46 @@ func makeEvent(update telegram.Update) eventsPack.Event {
 		Text: fetchText(update),
 	}
 
-	if event.Type == eventsPack.Message {
-		event.Meta = Meta{
+	switch event.Type {
+	case eventsPack.Message:
+		event.Meta = metaMessage{
 			ChatID:   update.Message.Chat.ID,
 			UserName: update.Message.From.UserName,
 		}
+	case eventsPack.CallbackQuery:
+		event.Meta = metaCallbackQuery{
+			ID:       update.CallbackQuery.ID,
+			UserName: update.CallbackQuery.From.UserName,
+			Data:     update.CallbackQuery.Data,
+		}
+	default:
 	}
 
 	return event
 }
 
-type Meta struct {
+type metaMessage struct {
 	ChatID   int
 	UserName string
 }
 
+type metaCallbackQuery struct {
+	ID       string
+	UserName string
+	Data     string
+}
+
 func fetchType(update telegram.Update) eventsPack.Type {
 
-	if update.Message == nil {
-		return eventsPack.Unknown
+	if update.CallbackQuery != nil {
+		return eventsPack.CallbackQuery
 	}
 
-	return eventsPack.Message
+	if update.Message != nil {
+		return eventsPack.Message
+	}
+
+	return eventsPack.Unknown
 }
 
 func fetchText(update telegram.Update) string {

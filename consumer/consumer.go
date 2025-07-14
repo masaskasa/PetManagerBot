@@ -1,5 +1,5 @@
 package consumer
 
-type IConsumer interface {
+type Consumer interface {
 	Start()
 }

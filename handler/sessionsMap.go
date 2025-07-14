@@ -8,7 +8,7 @@ func NewSessionsMap() SessionsMap {
 	return make(map[string]*Session)
 }
 
-func (sessions SessionsMap) GetSession(userName string, chatID int) *Session {
+func (sessions SessionsMap) GetSession(userName string) *Session {
 
 	session, exists := sessions[userName]
 	if exists {
