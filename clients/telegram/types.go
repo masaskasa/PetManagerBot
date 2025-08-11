@@ -67,6 +67,10 @@ func (markup *InlineKeyboardMarkup) AddButtonInlineKeyboardMarkup(button *Inline
 	markup.InlineKeyboard = append(markup.InlineKeyboard, []InlineKeyboardButton{*button})
 }
 
+func (markup *InlineKeyboardMarkup) AddButtonHorizontalInlineKeyboardMarkup(button *InlineKeyboardButton, pos int) {
+	markup.InlineKeyboard[pos] = append(markup.InlineKeyboard[pos], *button)
+}
+
 type CallbackQueryForAnswer struct {
 	ID        string `json:"callback_query_id"`
 	Text      string `json:"text"`
