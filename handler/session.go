@@ -63,6 +63,13 @@ func (session *Session) GetObject(key string) (interface{}, error) {
 	return tempObject, nil
 }
 
+func (session *Session) deleteTempObjects(keys ...string) {
+
+	for _, key := range keys {
+		delete(session.tempObjects, key)
+	}
+}
+
 func (session *Session) resetTempObjects() {
 	session.tempObjects = make(map[string]interface{})
 }

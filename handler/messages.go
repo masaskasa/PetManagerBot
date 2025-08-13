@@ -15,12 +15,15 @@ const (
 	msgAskAnimalID          = "What is your pet's AnimalID?"
 	msgAskSpecialSigns      = "Specify the special characteristics of the pet"
 	msgConfirmCreatePet     = "Your pet is ready! if everything is correct, confirm the creation of a pet"
-	msgReadyCreatePet       = "Your pet is saved!"
+	msgReadyCreatePet       = "Your pet is saved! ✅"
 	msgTryAgain             = "Sorry, try again "
 	msgUnknownCommand       = "Unknown command 🚫"
 	msgBreakCommand         = "Operation cancelled\n\n"
 	msgNeedlessBreakCommand = "You are not performing any operation to cancel it"
 	ntfSkip                 = "You skipped this step. You can complete it later"
+	msgNoSavedPets          = "You have no saved pets ⚠️. You can create pet with command /create_pet"
+	msgPickPet              = "Please select a pet"
+	msgInvalidPet           = "Invalid pet. Please choose the correct one\n\n"
 
 	msgHowToBegin = `How to begin?
 

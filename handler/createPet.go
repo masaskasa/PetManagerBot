@@ -63,7 +63,7 @@ func (handler *Handler) setNameComplete() error {
 		return err
 	}
 
-	handler.session.UpdateObject(pet, newPet)
+	handler.session.UpdateObject(newPetCard, newPet)
 	handler.session.setState(nameComplete)
 
 	speciesButtons, err := handler.speciesButtons()
@@ -102,7 +102,7 @@ func (handler *Handler) setSpeciesComplete() error {
 		}
 	}
 
-	handler.session.UpdateObject(pet, newPet)
+	handler.session.UpdateObject(newPetCard, newPet)
 	handler.session.setState(speciesComplete)
 
 	breedButtons, err := handler.breedButtons(species.ID)
@@ -141,7 +141,7 @@ func (handler *Handler) setBreedComplete() error {
 		}
 	}
 
-	handler.session.UpdateObject(pet, newPet)
+	handler.session.UpdateObject(newPetCard, newPet)
 	handler.session.setState(breedComplete)
 
 	_, result := handler.sendMessageKeyboard(msgAskSex, *handler.sexButtons())
@@ -171,7 +171,7 @@ func (handler *Handler) setSexComplete() error {
 		}
 	}
 
-	handler.session.UpdateObject(pet, newPet)
+	handler.session.UpdateObject(newPetCard, newPet)
 	handler.session.setState(sexComplete)
 
 	_, result := handler.sendMessageKeyboard(msgAskAnimalID, *handler.skipButton())
@@ -206,7 +206,7 @@ func (handler *Handler) setAnimalIDComplete() error {
 		if err := newPet.SetAnimalID(answer.(string)); err != nil {
 			return err
 		}
-		handler.session.UpdateObject(pet, newPet)
+		handler.session.UpdateObject(newPetCard, newPet)
 	}
 
 	handler.session.setState(animalIDComplete)
@@ -239,7 +239,7 @@ func (handler *Handler) setSpecialSignsComplete() error {
 
 		newPet.SetSpecialSigns(answer.(string))
 
-		handler.session.UpdateObject(pet, newPet)
+		handler.session.UpdateObject(newPetCard, newPet)
 	}
 
 	handler.session.setState(specialSignsComplete)
@@ -271,11 +271,13 @@ func (handler *Handler) setReadyCreatePet() error {
 		}
 		if _, err := handler.answerCallbackQuery("", false); err != nil {
 			slog.Error("setReadyCreatePet: answerCallbackQuery:", err)
+			return err
 		}
 		_, result = handler.sendMessage(msgReadyCreatePet)
 	case "do_not_confirm":
 		if _, err := handler.answerCallbackQuery("", false); err != nil {
 			slog.Error("setReadyCreatePet: answerCallbackQuery:", err)
+			return err
 		}
 		_, result = handler.sendMessage(fmt.Sprint(msgTryAgain, handler.session.scenario))
 	default:
@@ -285,13 +287,14 @@ func (handler *Handler) setReadyCreatePet() error {
 
 	handler.session.setState(ready)
 	handler.session.setScenario(none)
+	handler.session.deleteTempObjects(messageText, newPetCard, callbackQueryData)
 
 	return result
 }
 
 func (handler *Handler) determinePet() (*models.Pet, error) {
 
-	pet, err := handler.session.GetObject(pet)
+	pet, err := handler.session.GetObject(newPetCard)
 	if err != nil {
 		return nil, err
 	}
@@ -344,7 +347,7 @@ func (handler *Handler) determineBreed() (*models.Breed, error) {
 		return nil, ErrUnknownBreed
 	}
 
-	list, err := handler.session.GetObject(breed)
+	list, err := handler.session.GetObject(breeds)
 	if err != nil {
 		return nil, err
 	}
@@ -414,13 +417,13 @@ func (handler *Handler) breedButtons(speciesID int) (*telegram.InlineKeyboardMar
 
 	breedList := make(map[int]*models.Breed)
 
-	list, err := handler.session.GetObject(breed)
+	list, err := handler.session.GetObject(breeds)
 	if err != nil {
 		breedList, err = handler.storage.GetBreedsList(context.Background(), speciesID)
 		if err != nil {
 			return nil, err
 		}
-		handler.session.UpdateObject(breed, breedList)
+		handler.session.UpdateObject(breeds, breedList)
 	} else {
 		breedList = list.(map[int]*models.Breed)
 	}
