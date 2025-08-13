@@ -11,10 +11,11 @@ import (
 const (
 	messageText       = "MessageText"
 	userName          = "UserName"
-	pet               = "Pet"
+	newPetCard        = "NewPet"
 	species           = "Species"
-	breed             = "Breeds"
+	breeds            = "Breeds"
 	callbackQueryData = "CallbackQueryData"
+	userPets          = "UserPets"
 )
 
 type Handler struct {
@@ -57,6 +58,9 @@ func (handler *Handler) Handle() error {
 
 	case createPetCommand:
 		return handler.createPet()
+
+	case showPetCommand:
+		return handler.showPetCard()
 	}
 
 	return nil
@@ -79,6 +83,8 @@ func (handler *Handler) doCommand() error {
 	case createPetCommand:
 		handler.startCreatePetScenario()
 		return handler.nameMsg()
+	case showPetCommand:
+		return handler.startShowPetScenario()
 	default:
 		return handler.unknownMsg()
 	}

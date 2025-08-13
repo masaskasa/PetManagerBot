@@ -60,7 +60,7 @@ func (storage *StorageImpl) Remove(ctx context.Context, petID uuid.UUID) error {
 	return nil
 }
 
-func (storage *StorageImpl) Get(ctx context.Context, petID uuid.UUID) (*models.Pet, error) {
+func (storage *StorageImpl) GetPet(ctx context.Context, petID uuid.UUID) (*models.Pet, error) {
 
 	query := `select P.owner,
 					 P.name,
@@ -166,9 +166,9 @@ func (storage *StorageImpl) Update(ctx context.Context, pet *models.Pet) error {
 	return nil
 }
 
-func (storage *StorageImpl) GetPetsList(ctx context.Context, owner string) ([]models.Pet, error) {
+func (storage *StorageImpl) GetPetsList(ctx context.Context, owner string) (map[uuid.UUID]*models.Pet, error) {
 
-	pets := make([]models.Pet, 0, 10)
+	pets := make(map[uuid.UUID]*models.Pet)
 
 	query := `select pet_id, name from Pets where owner = ?`
 
@@ -196,7 +196,7 @@ func (storage *StorageImpl) GetPetsList(ctx context.Context, owner string) ([]mo
 			return nil, err
 		}
 
-		pets = append(pets, models.Pet{ID: petID, Name: name})
+		pets[petID] = &models.Pet{ID: petID, Name: name}
 	}
 
 	if len(pets) == 0 {
