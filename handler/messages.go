@@ -21,7 +21,7 @@ const (
 	msgBreakCommand         = "Operation cancelled\n\n"
 	msgNeedlessBreakCommand = "You are not performing any operation to cancel it"
 	ntfSkip                 = "You skipped this step. You can complete it later"
-	msgNoSavedPets          = "You have no saved pets ⚠️. You can create pet with command /create_pet"
+	msgNoSavedPets          = "You have no saved pets ⚠️\n\nYou can create pet with command /create_pet"
 	msgPickPet              = "Please select a pet"
 	msgInvalidPet           = "Invalid pet. Please choose the correct one\n\n"
 

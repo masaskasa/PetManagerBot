@@ -3,6 +3,7 @@ package handler
 import (
 	"PetManagerBot/clients/telegram"
 	"PetManagerBot/handler/models"
+	storagePack "PetManagerBot/storage"
 	"context"
 	"errors"
 	"github.com/google/uuid"
@@ -17,10 +18,6 @@ func (handler *Handler) startShowPetScenario() error {
 
 	return handler.showPetsList(msgPickPet)
 }
-
-var (
-	ErrNoSavedPets = errors.New("no saved pets")
-)
 
 func (handler *Handler) showPetsList(message string) error {
 
@@ -46,9 +43,12 @@ func (handler *Handler) petsButtons() (*telegram.InlineKeyboardMarkup, error) {
 	if err != nil {
 		petsList, err = handler.storage.GetPetsList(context.Background(), user.(string))
 		if err != nil {
-			if errors.Is(err, ErrNoSavedPets) {
+			if errors.Is(err, storagePack.ErrNoSavedPets) {
 				_, result := handler.sendMessage(msgNoSavedPets)
-				return nil, result
+				handler.session.setState(ready)
+				handler.session.setScenario(none)
+				handler.session.deleteTempObjects(messageText, callbackQueryData)
+				return nil, errors.Join(storagePack.ErrNoSavedPets, result)
 			}
 			return nil, err
 		}
