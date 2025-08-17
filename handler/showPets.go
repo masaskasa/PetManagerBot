@@ -32,7 +32,7 @@ func (handler *Handler) showPetsList(message string) error {
 
 func (handler *Handler) petsButtons() (*telegram.InlineKeyboardMarkup, error) {
 
-	user, err := handler.session.GetObject(userName)
+	user, err := handler.session.GetString(userName)
 	if err != nil {
 		return nil, err
 	}
@@ -41,19 +41,31 @@ func (handler *Handler) petsButtons() (*telegram.InlineKeyboardMarkup, error) {
 
 	list, err := handler.session.GetObject(userPets)
 	if err != nil {
-		petsList, err = handler.storage.GetPetsList(context.Background(), user.(string))
-		if err != nil {
-			if errors.Is(err, storagePack.ErrNoSavedPets) {
-				_, result := handler.sendMessage(msgNoSavedPets)
-				handler.session.setState(ready)
-				handler.session.setScenario(none)
-				handler.session.deleteTempObjects(messageText, callbackQueryData)
-				return nil, errors.Join(storagePack.ErrNoSavedPets, result)
+
+		if errors.Is(err, ErrObjectNotExists) {
+			petsList, err = handler.storage.GetPetsList(context.Background(), user)
+			if err != nil {
+				if errors.Is(err, storagePack.ErrNoSavedPets) {
+					_, result := handler.sendMessage(msgNoSavedPets)
+					handler.session.setState(ready)
+					handler.session.setScenario(none)
+					handler.session.deleteTempObjects(messageText, callbackQueryData)
+					return nil, errors.Join(storagePack.ErrNoSavedPets, result)
+				}
+				return nil, err
 			}
+			handler.session.UpdateObject(userPets, petsList)
+		} else {
 			return nil, err
 		}
-		handler.session.UpdateObject(userPets, petsList)
+
 	} else {
+
+		_, ok := list.(map[uuid.UUID]*models.Pet)
+		if !ok {
+			return nil, ErrExpectedAnotherType
+		}
+
 		petsList = list.(map[uuid.UUID]*models.Pet)
 	}
 
@@ -81,19 +93,22 @@ func (handler *Handler) showPetCard() error {
 		return result
 	}
 
-	answer, err := handler.session.GetObject(callbackQueryData)
+	answer, err := handler.session.GetString(callbackQueryData)
 	if err != nil {
 		return err
 	}
 
-	petID, err := uuid.Parse(answer.(string))
+	petID, err := uuid.Parse(answer)
 
 	petsList, err := handler.session.GetObject(userPets)
 	if err != nil {
 		return err
 	}
 
-	pets := petsList.(map[uuid.UUID]*models.Pet)
+	pets, ok := petsList.(map[uuid.UUID]*models.Pet)
+	if !ok {
+		return ErrExpectedAnotherType
+	}
 
 	pet, ok := pets[petID]
 	if !ok {
@@ -107,12 +122,24 @@ func (handler *Handler) showPetCard() error {
 
 	petCache, err := handler.session.GetObject(pet.ID.String())
 	if err != nil {
-		pet, err = handler.storage.GetPet(context.Background(), pet.ID)
-		if err != nil {
+
+		if errors.Is(err, ErrObjectNotExists) {
+			pet, err = handler.storage.GetPet(context.Background(), pet.ID)
+			if err != nil {
+				return err
+			}
+			handler.session.UpdateObject(pet.ID.String(), pet)
+		} else {
 			return err
 		}
-		handler.session.UpdateObject(pet.ID.String(), pet)
+
 	} else {
+
+		_, ok := petCache.(*models.Pet)
+		if !ok {
+			return ErrExpectedAnotherType
+		}
+
 		pet = petCache.(*models.Pet)
 	}
 
