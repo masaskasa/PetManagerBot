@@ -307,6 +307,7 @@ func (handler *Handler) determinePet() (*models.Pet, error) {
 
 	newPet, ok := pet.(*models.Pet)
 	if !ok {
+		slog.Error("determinePet: type assertion problem: expected pet, get:", pet)
 		return nil, ErrExpectedAnotherType
 	}
 
@@ -332,6 +333,7 @@ func (handler *Handler) determineSpecies() (*models.Species, error) {
 
 	speciesList, ok := list.(map[int]*models.Species)
 	if !ok {
+		slog.Error("determineSpecies: type assertion problem: expected species, get:", list)
 		return nil, ErrExpectedAnotherType
 	}
 
@@ -362,6 +364,7 @@ func (handler *Handler) determineBreed() (*models.Breed, error) {
 
 	breedList, ok := list.(map[int]*models.Breed)
 	if !ok {
+		slog.Error("determineBreed: type assertion problem: expected breeds, get:", list)
 		return nil, ErrExpectedAnotherType
 	}
 
@@ -411,6 +414,7 @@ func (handler *Handler) speciesButtons() (*telegram.InlineKeyboardMarkup, error)
 
 		_, ok := list.(map[int]*models.Species)
 		if !ok {
+			slog.Error("speciesButtons: type assertion problem: expected species, get:", list)
 			return nil, ErrExpectedAnotherType
 		}
 
@@ -455,6 +459,7 @@ func (handler *Handler) breedButtons(speciesID int) (*telegram.InlineKeyboardMar
 
 		_, ok := list.(map[int]*models.Breed)
 		if !ok {
+			slog.Error("breedButtons: type assertion problem: expected breeds, get:", list)
 			return nil, ErrExpectedAnotherType
 		}
 

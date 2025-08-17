@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log/slog"
 	"time"
 )
 
@@ -74,6 +75,7 @@ func (session *Session) GetInt(key string) (int, error) {
 
 	tempInt, ok := tempObject.(int)
 	if !ok {
+		slog.Error("GetInt: type assertion problem: expected int, get:", tempObject)
 		return -1, ErrExpectedInt
 	}
 
@@ -89,6 +91,7 @@ func (session *Session) GetString(key string) (string, error) {
 
 	tempString, ok := tempObject.(string)
 	if !ok {
+		slog.Error("GetString: type assertion problem: expected string, get:", tempObject)
 		return "", ErrExpectedString
 	}
 

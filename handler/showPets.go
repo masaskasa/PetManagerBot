@@ -63,6 +63,7 @@ func (handler *Handler) petsButtons() (*telegram.InlineKeyboardMarkup, error) {
 
 		_, ok := list.(map[uuid.UUID]*models.Pet)
 		if !ok {
+			slog.Error("petsButtons: type assertion problem: expected pets, get:", list)
 			return nil, ErrExpectedAnotherType
 		}
 
@@ -107,6 +108,7 @@ func (handler *Handler) showPetCard() error {
 
 	pets, ok := petsList.(map[uuid.UUID]*models.Pet)
 	if !ok {
+		slog.Error("showPetCard: type assertion problem: expected pets, get:", petsList)
 		return ErrExpectedAnotherType
 	}
 
@@ -137,6 +139,7 @@ func (handler *Handler) showPetCard() error {
 
 		_, ok := petCache.(*models.Pet)
 		if !ok {
+			slog.Error("showPetCard: type assertion problem: expected pet, get:", petCache)
 			return ErrExpectedAnotherType
 		}
 
