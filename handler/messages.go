@@ -10,7 +10,7 @@ const (
 	msgInvalidBreed         = "Invalid breed. Please choose the correct one\n\n"
 	ntfSetBreed             = "You have chosen the breed of "
 	msgAskSex               = "What is your pet's gender?"
-	msgInvalidSex           = "Invalid gender. Please choose the correct"
+	msgInvalidSex           = "Invalid gender. Please choose the correct one"
 	ntfSetSex               = "You have chosen the gender of "
 	msgAskAnimalID          = "What is your pet's AnimalID?"
 	msgAskSpecialSigns      = "Specify the special characteristics of the pet"

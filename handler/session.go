@@ -15,6 +15,8 @@ type Session struct {
 var (
 	ErrObjectAlreadyExists = errors.New("can't save object: it already exist")
 	ErrObjectNotExists     = errors.New("can't get object: it not exist")
+	ErrExpectedInt         = errors.New("can't get object: expected int")
+	ErrExpectedString      = errors.New("can't get object: expected string")
 )
 
 func newSession() *Session {
@@ -61,6 +63,36 @@ func (session *Session) GetObject(key string) (interface{}, error) {
 	}
 
 	return tempObject, nil
+}
+
+func (session *Session) GetInt(key string) (int, error) {
+
+	tempObject, exists := session.tempObjects[key]
+	if !exists {
+		return -1, ErrObjectNotExists
+	}
+
+	tempInt, ok := tempObject.(int)
+	if !ok {
+		return -1, ErrExpectedInt
+	}
+
+	return tempInt, nil
+}
+
+func (session *Session) GetString(key string) (string, error) {
+
+	tempObject, exists := session.tempObjects[key]
+	if !exists {
+		return "", ErrObjectNotExists
+	}
+
+	tempString, ok := tempObject.(string)
+	if !ok {
+		return "", ErrExpectedString
+	}
+
+	return tempString, nil
 }
 
 func (session *Session) deleteTempObjects(keys ...string) {

@@ -68,12 +68,12 @@ func (handler *Handler) Handle() error {
 
 func (handler *Handler) doCommand() error {
 
-	text, err := handler.session.GetObject(messageText)
+	text, err := handler.session.GetString(messageText)
 	if err != nil {
 		return err
 	}
 
-	command := strings.TrimSpace(text.(string))
+	command := strings.TrimSpace(text)
 
 	switch command {
 	case startCommand:
@@ -112,12 +112,12 @@ func (handler *Handler) unknownMsg() error {
 
 func (handler *Handler) breakScenario() (bool, error) {
 
-	text, err := handler.session.GetObject(messageText)
+	text, err := handler.session.GetString(messageText)
 	if err != nil {
 		return false, err
 	}
 
-	command := strings.TrimSpace(text.(string))
+	command := strings.TrimSpace(text)
 
 	if command == breakCommand {
 		return true, handler.breakMsg()

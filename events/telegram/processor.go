@@ -146,12 +146,10 @@ func (processor *ProcessorImpl) prepareSession(event *eventsPack.Event) (*handle
 
 func newMessageSender(session *handler.Session, tgClient *telegram.Client) (func(string) (telegram.Message, error), error) {
 
-	chat, err := session.GetObject(chatID)
+	chatID, err := session.GetInt(chatID)
 	if err != nil {
 		return nil, err
 	}
-
-	chatID := chat.(int)
 
 	return func(msg string) (telegram.Message, error) {
 		return tgClient.SendMessage(chatID, msg, telegram.InlineKeyboardMarkup{})
@@ -160,12 +158,10 @@ func newMessageSender(session *handler.Session, tgClient *telegram.Client) (func
 
 func newMessageSenderKeyboard(session *handler.Session, tgClient *telegram.Client) (func(string, telegram.InlineKeyboardMarkup) (telegram.Message, error), error) {
 
-	chat, err := session.GetObject(chatID)
+	chatID, err := session.GetInt(chatID)
 	if err != nil {
 		return nil, err
 	}
-
-	chatID := chat.(int)
 
 	return func(msg string, keyboard telegram.InlineKeyboardMarkup) (telegram.Message, error) {
 		return tgClient.SendMessage(chatID, msg, keyboard)
@@ -174,12 +170,10 @@ func newMessageSenderKeyboard(session *handler.Session, tgClient *telegram.Clien
 
 func newAnswererCallbackQuery(session *handler.Session, tgClient *telegram.Client) (func(string, bool) (telegram.Message, error), error) {
 
-	id, err := session.GetObject(callbackQueryID)
+	callbackQueryID, err := session.GetString(callbackQueryID)
 	if err != nil {
 		return nil, err
 	}
-
-	callbackQueryID := id.(string)
 
 	return func(text string, showAlert bool) (telegram.Message, error) {
 		return tgClient.AnswerCallbackQuery(callbackQueryID, text, showAlert)
