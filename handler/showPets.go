@@ -89,37 +89,9 @@ func (handler *Handler) petsButtons() (*telegram.InlineKeyboardMarkup, error) {
 
 func (handler *Handler) showPetCard() error {
 
-	if handler.answerCallbackQuery == nil {
-		result := handler.showPetsList(msgInvalidPet)
-		return result
-	}
-
-	answer, err := handler.session.GetString(callbackQueryData)
+	pet, err := handler.determinePet()
 	if err != nil {
 		return err
-	}
-
-	petID, err := uuid.Parse(answer)
-
-	petsList, err := handler.session.GetObject(userPets)
-	if err != nil {
-		return err
-	}
-
-	pets, ok := petsList.(map[uuid.UUID]*models.Pet)
-	if !ok {
-		slog.Error("showPetCard: type assertion problem: expected pets, get:", petsList)
-		return ErrExpectedAnotherType
-	}
-
-	pet, ok := pets[petID]
-	if !ok {
-		if _, err := handler.answerCallbackQuery("", false); err != nil {
-			slog.Error("showPetCard: answerCallbackQuery:", err)
-			return err
-		}
-		result := handler.showPetsList(msgInvalidPet)
-		return result
 	}
 
 	petCache, err := handler.session.GetObject(pet.ID.String())
@@ -146,11 +118,6 @@ func (handler *Handler) showPetCard() error {
 		pet = petCache.(*models.Pet)
 	}
 
-	if _, err := handler.answerCallbackQuery("", false); err != nil {
-		slog.Error("showPetCard: answerCallbackQuery:", err)
-		return err
-	}
-
 	_, result := handler.sendMessage(pet.String())
 
 	handler.session.setState(ready)
@@ -158,4 +125,47 @@ func (handler *Handler) showPetCard() error {
 	handler.session.deleteTempObjects(messageText, callbackQueryData)
 
 	return result
+}
+
+func (handler *Handler) determinePet() (*models.Pet, error) {
+
+	if handler.answerCallbackQuery == nil {
+		result := handler.showPetsList(msgInvalidPet)
+		return nil, errors.Join(errors.New("invalid pet"), result)
+	}
+
+	answer, err := handler.session.GetString(callbackQueryData)
+	if err != nil {
+		return nil, err
+	}
+
+	petID, err := uuid.Parse(answer)
+
+	petsList, err := handler.session.GetObject(userPets)
+	if err != nil {
+		return nil, err
+	}
+
+	pets, ok := petsList.(map[uuid.UUID]*models.Pet)
+	if !ok {
+		slog.Error("showPetCard: type assertion problem: expected pets, get:", petsList)
+		return nil, ErrExpectedAnotherType
+	}
+
+	pet, ok := pets[petID]
+	if !ok {
+		if _, err := handler.answerCallbackQuery("", false); err != nil {
+			slog.Error("showPetCard: answerCallbackQuery:", err)
+			return nil, err
+		}
+		result := handler.showPetsList(msgInvalidPet)
+		return nil, errors.Join(errors.New("invalid pet"), result)
+	}
+
+	if _, err := handler.answerCallbackQuery("", false); err != nil {
+		slog.Error("determinePet: answerCallbackQuery:", err)
+		return nil, err
+	}
+
+	return pet, nil
 }

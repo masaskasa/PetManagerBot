@@ -103,7 +103,7 @@ func (handler *Handler) setSpeciesComplete() error {
 		slog.Error("setSpeciesComplete: answerCallbackQuery:", err)
 	}
 
-	newPet, err := handler.determinePet()
+	newPet, err := handler.determineNewPet()
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (handler *Handler) setSpeciesComplete() error {
 
 func (handler *Handler) setBreedComplete() error {
 
-	newPet, err := handler.determinePet()
+	newPet, err := handler.determineNewPet()
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func (handler *Handler) setSexComplete() error {
 		return err
 	}
 
-	newPet, err := handler.determinePet()
+	newPet, err := handler.determineNewPet()
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (handler *Handler) setAnimalIDComplete() error {
 			return err
 		}
 
-		newPet, err := handler.determinePet()
+		newPet, err := handler.determineNewPet()
 		if err != nil {
 			return err
 		}
@@ -230,7 +230,7 @@ func (handler *Handler) setAnimalIDComplete() error {
 
 func (handler *Handler) setSpecialSignsComplete() error {
 
-	newPet, err := handler.determinePet()
+	newPet, err := handler.determineNewPet()
 	if err != nil {
 		return err
 	}
@@ -252,13 +252,13 @@ func (handler *Handler) setSpecialSignsComplete() error {
 
 	handler.session.setState(specialSignsComplete)
 
-	_, result := handler.sendMessageKeyboard(msgConfirmCreatePet+"\n\n"+newPet.String(), *handler.confirmationButtons())
+	_, result := handler.sendMessageKeyboard(msgConfirmCreatePet+newPet.String(), *handler.confirmationButtons())
 	return result
 }
 
 func (handler *Handler) setReadyCreatePet() error {
 
-	newPet, err := handler.determinePet()
+	newPet, err := handler.determineNewPet()
 	if err != nil {
 		return err
 	}
@@ -287,7 +287,7 @@ func (handler *Handler) setReadyCreatePet() error {
 		}
 		_, result = handler.sendMessage(fmt.Sprint(msgTryAgain, handler.session.scenario))
 	default:
-		_, result := handler.sendMessageKeyboard(msgConfirmCreatePet+"\n\n"+newPet.String(), *handler.confirmationButtons())
+		_, result := handler.sendMessageKeyboard(msgConfirmCreatePet+newPet.String(), *handler.confirmationButtons())
 		return result
 	}
 
@@ -298,7 +298,7 @@ func (handler *Handler) setReadyCreatePet() error {
 	return result
 }
 
-func (handler *Handler) determinePet() (*models.Pet, error) {
+func (handler *Handler) determineNewPet() (*models.Pet, error) {
 
 	pet, err := handler.session.GetObject(newPetCard)
 	if err != nil {
