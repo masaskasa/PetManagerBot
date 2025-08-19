@@ -14,7 +14,7 @@ const (
 	ntfSetSex               = "You have chosen the gender of "
 	msgAskAnimalID          = "What is your pet's AnimalID?"
 	msgAskSpecialSigns      = "Specify the special characteristics of the pet"
-	msgConfirmCreatePet     = "Your pet is ready! if everything is correct, confirm the creation of a pet"
+	msgConfirmCreatePet     = "Your pet is ready! if everything is correct, confirm the creation of a pet\n\n"
 	msgReadyCreatePet       = "Your pet is saved! ✅"
 	msgTryAgain             = "Sorry, try again "
 	msgUnknownCommand       = "Unknown command 🚫"
@@ -24,6 +24,9 @@ const (
 	msgNoSavedPets          = "You have no saved pets ⚠️\n\nYou can create pet with command /create_pet"
 	msgPickPet              = "Please select a pet"
 	msgInvalidPet           = "Invalid pet. Please choose the correct one\n\n"
+	msgConfirmDeletePet     = "Are you sure you want to delete the pet card? This action cannot be undone\n\n"
+	msgReadyDeletePet       = "Pet's card has been deleted"
+	msgCancelDelete         = "Pet's card deletion canceled"
 
 	msgHowToBegin = `How to begin?
 

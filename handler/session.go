@@ -20,6 +20,19 @@ var (
 	ErrExpectedString      = errors.New("can't get object: expected string")
 )
 
+// Keys for tempObjects
+// Also cache pets by UUID
+const (
+	messageText       = "MessageText"
+	userName          = "UserName"
+	newPetCard        = "NewPet"
+	species           = "Species"
+	breeds            = "Breeds"
+	callbackQueryData = "CallbackQueryData"
+	userPets          = "UserPets"
+	deletePetCard     = "DeletePet"
+)
+
 func newSession() *Session {
 	return &Session{
 		scenario:     none,

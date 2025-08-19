@@ -8,16 +8,6 @@ import (
 	"strings"
 )
 
-const (
-	messageText       = "MessageText"
-	userName          = "UserName"
-	newPetCard        = "NewPet"
-	species           = "Species"
-	breeds            = "Breeds"
-	callbackQueryData = "CallbackQueryData"
-	userPets          = "UserPets"
-)
-
 type Handler struct {
 	session             *Session
 	storage             storagePack.Storage
@@ -61,6 +51,9 @@ func (handler *Handler) Handle() error {
 
 	case showPetCommand:
 		return handler.showPetCard()
+
+	case deletePetCommand:
+		return handler.deletePet()
 	}
 
 	return nil
@@ -85,6 +78,8 @@ func (handler *Handler) doCommand() error {
 		return handler.nameMsg()
 	case showPetCommand:
 		return handler.startShowPetScenario()
+	case deletePetCommand:
+		return handler.startDeletePetScenario()
 	default:
 		return handler.unknownMsg()
 	}
