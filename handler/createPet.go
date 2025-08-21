@@ -293,7 +293,7 @@ func (handler *Handler) setReadyCreatePet() error {
 
 	handler.session.setState(ready)
 	handler.session.setScenario(none)
-	handler.session.deleteTempObjects(messageText, newPetCard, callbackQueryData)
+	handler.session.deleteTempObjects(messageText, newPetCard, callbackQueryData, userPets)
 
 	return result
 }
@@ -432,7 +432,7 @@ func (handler *Handler) speciesButtons() (*telegram.InlineKeyboardMarkup, error)
 	buttons := telegram.NewInlineKeyboardMarkup()
 
 	for _, species := range sortSpeciesList {
-		buttons.AddButtonInlineKeyboardMarkup(&telegram.InlineKeyboardButton{Text: species.Name, CallbackData: strconv.Itoa(species.ID)})
+		buttons.AddButtonInlineKeyboardMarkup(&telegram.InlineKeyboardButton{Text: species.Icon + species.Name, CallbackData: strconv.Itoa(species.ID)})
 	}
 
 	return &buttons, nil

@@ -9,9 +9,9 @@ const (
 
 func (sex Sex) String() string {
 	if sex == Female {
-		return "\nFemale"
+		return "⚧️ Gender: " + "♀️\n"
 	} else if sex == Male {
-		return "\nMale"
+		return "⚧️ Gender: " + "♂️\n"
 	}
 	return "\n-"
 }

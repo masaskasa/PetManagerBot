@@ -66,6 +66,7 @@ func (storage *StorageImpl) GetPet(ctx context.Context, petID uuid.UUID) (*model
 					 P.name,
 					 P.species_id,
 					 S.name,
+					 S.icon,
 					 P.breed_id,
 					 B.name,
 					 P.sex,
@@ -76,11 +77,11 @@ func (storage *StorageImpl) GetPet(ctx context.Context, petID uuid.UUID) (*model
 			  join Breeds as B on P.breed_id=B.breed_id
 			  where pet_id = ?`
 
-	var owner, name, speciesName, breedName string
+	var owner, name, speciesName, icon, breedName string
 	var animalIDBytes, specialSignsBytes []byte
 	var speciesID, breedID, sex int
 
-	err := storage.db.QueryRowContext(ctx, query, petID).Scan(&owner, &name, &speciesID, &speciesName, &breedID, &breedName, &sex, &animalIDBytes, &specialSignsBytes)
+	err := storage.db.QueryRowContext(ctx, query, petID).Scan(&owner, &name, &speciesID, &speciesName, &icon, &breedID, &breedName, &sex, &animalIDBytes, &specialSignsBytes)
 	if err != nil {
 		slog.Error("Get: can't get pet:", err)
 		return nil, err
@@ -93,7 +94,7 @@ func (storage *StorageImpl) GetPet(ctx context.Context, petID uuid.UUID) (*model
 
 	var animalID string
 	if animalIDBytes != nil {
-		specialSigns = string(animalIDBytes)
+		animalID = string(animalIDBytes)
 	}
 
 	return &models.Pet{
@@ -102,7 +103,8 @@ func (storage *StorageImpl) GetPet(ctx context.Context, petID uuid.UUID) (*model
 		Name:  name,
 		Species: &models.Species{
 			ID:   speciesID,
-			Name: speciesName},
+			Name: speciesName,
+			Icon: icon},
 		Breed: &models.Breed{
 			ID:   breedID,
 			Name: breedName},
@@ -212,7 +214,7 @@ func (storage *StorageImpl) GetSpeciesList(ctx context.Context) (map[int]*models
 
 	species := make(map[int]*models.Species)
 
-	query := `select species_id, name from Species`
+	query := `select species_id, name, icon from Species`
 
 	rows, err := storage.db.Query(query)
 	defer func() { _ = rows.Close() }()
@@ -224,14 +226,15 @@ func (storage *StorageImpl) GetSpeciesList(ctx context.Context) (map[int]*models
 	for rows.Next() {
 		var id int
 		var name string
+		var icon string
 
-		err = rows.Scan(&id, &name)
+		err = rows.Scan(&id, &name, &icon)
 		if err != nil {
 			slog.Error("GetSpeciesList: can't parse species from row:", err)
 			return nil, err
 		}
 
-		species[id] = &models.Species{ID: id, Name: name}
+		species[id] = &models.Species{ID: id, Name: name, Icon: icon}
 	}
 
 	slog.Info("GetSpeciesList: result:", species)
