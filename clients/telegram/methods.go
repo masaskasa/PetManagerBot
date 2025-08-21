@@ -5,12 +5,18 @@ import (
 	"log/slog"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 const (
 	getUpdates          = "getUpdates"
 	sendMessage         = "sendMessage"
 	answerCallbackQuery = "answerCallbackQuery"
+)
+
+const (
+	// Formatting option
+	markdownV2 = "MarkdownV2"
 )
 
 func (client *Client) GetUpdates(offset int, limit int) ([]Update, error) {
@@ -60,10 +66,12 @@ func (client *Client) SendMessage(chatID int, text string, replyMarkup InlineKey
 
 func createTextMessage(chatID int, text string, replyMarkup InlineKeyboardMarkup) interface{} {
 
+	text = escapeMarkdownV2(text)
+
 	if replyMarkup.InlineKeyboard != nil {
-		return TextMessageReplyMarkup{ChatID: chatID, Text: text, ReplyMarkup: replyMarkup}
+		return TextMessageReplyMarkup{ChatID: chatID, Text: text, ReplyMarkup: replyMarkup, ParseMode: markdownV2}
 	} else {
-		return TextMessage{ChatID: chatID, Text: text}
+		return TextMessage{ChatID: chatID, Text: text, ParseMode: markdownV2}
 	}
 }
 
@@ -92,4 +100,32 @@ func (client *Client) AnswerCallbackQuery(callbackQueryID string, text string, s
 	}
 
 	return message, nil
+}
+
+func escapeMarkdownV2(text string) string {
+	replacer := strings.NewReplacer(
+		//"_", "\\_",
+		//"*", "\\*",
+		"[", "\\[",
+		"]", "\\]",
+		"(", "\\(",
+		")", "\\)",
+		"~", "\\~",
+		"`", "\\`",
+		">", "\\>",
+		"#", "\\#",
+		"+", "\\+",
+		"-", "\\-",
+		"=", "\\=",
+		"|", "\\|",
+		"{", "\\{",
+		"}", "\\}",
+		".", "\\.",
+		"!", "\\!",
+		"/create_pet", "/create\\_pet",
+		"/show_pet", "/show\\_pet",
+		"/edit_pet", "/edit\\_pet",
+		"/delete_pet", "/delete\\_pet",
+	)
+	return replacer.Replace(text)
 }

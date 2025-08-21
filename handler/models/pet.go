@@ -1,8 +1,8 @@
 package models
 
 import (
+	"fmt"
 	"github.com/google/uuid"
-	"log/slog"
 )
 
 type Pet struct {
@@ -26,29 +26,34 @@ func NewPet(owner string) *Pet {
 
 func (pet *Pet) String() string {
 
+	name := fmt.Sprintf("🐾 *%s* 🐾\n\n", pet.Name)
+
 	var species string
 	if pet.Species != nil {
-		species = "\n" + pet.Species.Name
+		species = pet.Species.String()
 	}
 
 	var breed string
 	if pet.Breed != nil {
-		breed = "\n" + pet.Breed.Name
+		breed = pet.Breed.String()
 	}
+
+	sex := pet.Sex.String()
 
 	var animalID string
 	if pet.AnimalID != "" {
-		animalID = "\n" + pet.AnimalID
+		animalID = fmt.Sprintf("🆔 Animal ID: %s\n", pet.AnimalID)
 	}
 
 	var specialSigns string
 	if pet.SpecialSigns != "" {
-		specialSigns = "\n\n" + pet.SpecialSigns
+		specialSigns = fmt.Sprintf("🔍 SpecialSigns: %s\n", pet.SpecialSigns)
 	}
 
-	result := pet.Name + species + breed + pet.Sex.String() + animalID + specialSigns
+	quote := "━━━━━━━━━━━━━━"
 
-	slog.Info("Pet: String() result:", result)
+	result := name + quote + "\n" + species + breed + sex + animalID + specialSigns + quote
+
 	return result
 }
 

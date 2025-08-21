@@ -1,6 +1,8 @@
 package models
 
-import "strconv"
+import (
+	"fmt"
+)
 
 type Breed struct {
 	ID        int
@@ -9,5 +11,5 @@ type Breed struct {
 }
 
 func (breed *Breed) String() string {
-	return breed.Name + " /" + strconv.Itoa(breed.ID)
+	return fmt.Sprintf("🏷️ Breed: %s\n", breed.Name)
 }

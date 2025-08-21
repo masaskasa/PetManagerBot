@@ -34,14 +34,16 @@ type Chat struct {
 }
 
 type TextMessage struct {
-	ChatID int    `json:"chat_id"`
-	Text   string `json:"text"`
+	ChatID    int    `json:"chat_id"`
+	Text      string `json:"text"`
+	ParseMode string `json:"parse_mode"`
 }
 
 type TextMessageReplyMarkup struct {
 	ChatID      int                  `json:"chat_id"`
 	Text        string               `json:"text"`
 	ReplyMarkup InlineKeyboardMarkup `json:"reply_markup"`
+	ParseMode   string               `json:"parse_mode"`
 }
 
 type InlineKeyboardButton struct {
