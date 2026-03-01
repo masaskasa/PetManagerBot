@@ -12,9 +12,12 @@ import (
 	"strings"
 )
 
-func (handler *Handler) startCreatePetScenario() {
+func (handler *Handler) startCreatePetScenario() error {
+
 	handler.session.setScenario(createPetCommand)
 	handler.session.setState(start)
+
+	return handler.askName()
 }
 
 var (
@@ -343,6 +346,11 @@ func (handler *Handler) determineSpecies() (*models.Species, error) {
 	}
 
 	return species, nil
+}
+
+func (handler *Handler) askName() error {
+	_, result := handler.sendMessage(msgAskName)
+	return result
 }
 
 func (handler *Handler) determineBreed() (*models.Breed, error) {

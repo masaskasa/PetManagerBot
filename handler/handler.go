@@ -54,6 +54,9 @@ func (handler *Handler) Handle() error {
 
 	case deletePetCommand:
 		return handler.deletePet()
+
+	case editPetCommand:
+		return handler.editPet()
 	}
 
 	return nil
@@ -74,12 +77,13 @@ func (handler *Handler) doCommand() error {
 	case helpCommand:
 		return handler.helpMsg()
 	case createPetCommand:
-		handler.startCreatePetScenario()
-		return handler.nameMsg()
+		return handler.startCreatePetScenario()
 	case showPetCommand:
 		return handler.startShowPetScenario()
 	case deletePetCommand:
 		return handler.startDeletePetScenario()
+	case editPetCommand:
+		return handler.startEditPetScenario()
 	default:
 		return handler.unknownMsg()
 	}
@@ -90,13 +94,8 @@ func (handler *Handler) helloMsg() error {
 	return result
 }
 
-func (handler *Handler) nameMsg() error {
-	_, result := handler.sendMessage(msgAskName)
-	return result
-}
-
 func (handler *Handler) helpMsg() error {
-	_, result := handler.sendMessage(msgHowToBegin)
+	_, result := handler.sendMessage(msgHelp)
 	return result
 }
 

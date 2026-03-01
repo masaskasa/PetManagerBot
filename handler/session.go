@@ -31,6 +31,7 @@ const (
 	callbackQueryData = "CallbackQueryData"
 	userPets          = "UserPets"
 	deletePetCard     = "DeletePet"
+	editPetCard       = "EditPet"
 )
 
 func newSession() *Session {

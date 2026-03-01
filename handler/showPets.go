@@ -94,28 +94,9 @@ func (handler *Handler) showPetCard() error {
 		return err
 	}
 
-	petCache, err := handler.session.GetObject(pet.ID.String())
+	pet, err = handler.getFullPetCard(pet)
 	if err != nil {
-
-		if errors.Is(err, ErrObjectNotExists) {
-			pet, err = handler.storage.GetPet(context.Background(), pet.ID)
-			if err != nil {
-				return err
-			}
-			handler.session.UpdateObject(pet.ID.String(), pet)
-		} else {
-			return err
-		}
-
-	} else {
-
-		_, ok := petCache.(*models.Pet)
-		if !ok {
-			slog.Error("showPetCard: type assertion problem: expected pet, get:", petCache)
-			return ErrExpectedAnotherType
-		}
-
-		pet = petCache.(*models.Pet)
+		return err
 	}
 
 	_, result := handler.sendMessage(pet.String())
@@ -148,14 +129,14 @@ func (handler *Handler) determinePet() (*models.Pet, error) {
 
 	pets, ok := petsList.(map[uuid.UUID]*models.Pet)
 	if !ok {
-		slog.Error("showPetCard: type assertion problem: expected pets, get:", petsList)
+		slog.Error("determinePet: type assertion problem: expected pets, get:", petsList)
 		return nil, ErrExpectedAnotherType
 	}
 
 	pet, ok := pets[petID]
 	if !ok {
 		if _, err := handler.answerCallbackQuery("", false); err != nil {
-			slog.Error("showPetCard: answerCallbackQuery:", err)
+			slog.Error("determinePet: answerCallbackQuery:", err)
 			return nil, err
 		}
 		result := handler.showPetsList(msgInvalidPet)
@@ -167,5 +148,33 @@ func (handler *Handler) determinePet() (*models.Pet, error) {
 		return nil, err
 	}
 
+	return pet, nil
+}
+
+func (handler *Handler) getFullPetCard(pet *models.Pet) (*models.Pet, error) {
+
+	petCache, err := handler.session.GetObject(pet.ID.String())
+	if err != nil {
+
+		if errors.Is(err, ErrObjectNotExists) {
+			pet, err = handler.storage.GetPet(context.Background(), pet.ID)
+			if err != nil {
+				return nil, err
+			}
+			handler.session.UpdateObject(pet.ID.String(), pet)
+		} else {
+			return nil, err
+		}
+
+	} else {
+
+		_, ok := petCache.(*models.Pet)
+		if !ok {
+			slog.Error("showPetCard: type assertion problem: expected pet, get:", petCache)
+			return nil, ErrExpectedAnotherType
+		}
+
+		pet = petCache.(*models.Pet)
+	}
 	return pet, nil
 }

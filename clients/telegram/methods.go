@@ -104,8 +104,8 @@ func (client *Client) AnswerCallbackQuery(callbackQueryID string, text string, s
 
 func escapeMarkdownV2(text string) string {
 	replacer := strings.NewReplacer(
-		//"_", "\\_",
-		//"*", "\\*",
+		//"_", "\\_", // Italic
+		//"*", "\\*", // Bold
 		"[", "\\[",
 		"]", "\\]",
 		"(", "\\(",
