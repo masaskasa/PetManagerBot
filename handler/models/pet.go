@@ -17,6 +17,15 @@ type Pet struct {
 	SpecialSigns string
 }
 
+const (
+	EditName         = "EditName"
+	EditSpecies      = "EditSpecies"
+	EditBreed        = "EditBreed"
+	EditGender       = "EditGender"
+	EditAnimalID     = "EditAnimalID"
+	EditSpecialSigns = "EditSpecialSigns"
+)
+
 func NewPet(owner string) *Pet {
 	return &Pet{
 		ID:    uuid.New(),
@@ -30,15 +39,20 @@ func (pet *Pet) String() string {
 
 	var species string
 	if pet.Species != nil {
-		species = pet.Species.String()
+		species = fmt.Sprintf(pet.Species.Icon+" Species: %s\n", pet.Species.Name)
 	}
 
 	var breed string
 	if pet.Breed != nil {
-		breed = pet.Breed.String()
+		breed = fmt.Sprintf("🏷️ Breed: %s\n", pet.Breed.Name)
 	}
 
-	sex := pet.Sex.String()
+	var sex string
+	if pet.Sex == Female {
+		sex = fmt.Sprintf("⚧️ Gender: " + "♀️\n")
+	} else if pet.Sex == Male {
+		sex = fmt.Sprintf("⚧️ Gender: " + "♂️\n")
+	}
 
 	var animalID string
 	if pet.AnimalID != "" {
@@ -47,7 +61,7 @@ func (pet *Pet) String() string {
 
 	var specialSigns string
 	if pet.SpecialSigns != "" {
-		specialSigns = fmt.Sprintf("🔍 SpecialSigns: %s\n", pet.SpecialSigns)
+		specialSigns = fmt.Sprintf("🔍 Special Signs: %s\n", pet.SpecialSigns)
 	}
 
 	quote := "━━━━━━━━━━━━━━"
@@ -83,4 +97,20 @@ func (pet *Pet) SetAnimalID(animalID string) error {
 
 func (pet *Pet) SetSpecialSigns(specialSigns string) {
 	pet.SpecialSigns = specialSigns
+}
+
+func editFlag(editingFields map[string]bool, targetParameter string) string {
+	if editingFields != nil {
+		for parameter, flag := range editingFields {
+			switch parameter {
+			case targetParameter:
+				if flag {
+					return "✏️"
+				}
+			default:
+				continue
+			}
+		}
+	}
+	return ""
 }
